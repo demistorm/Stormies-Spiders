@@ -1,0 +1,153 @@
+plugins {
+    // Architectury plugin for multi-loader builds
+    id "architectury-plugin" version "3.4-SNAPSHOT"
+    // Loom plugin for Minecraft modding (applied to subprojects)
+    id "dev.architectury.loom" version "1.11-SNAPSHOT" apply false
+    // Required for NeoGradle
+    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.7"
+}
+
+// Tell Architectury which Minecraft version we're targeting
+architectury {
+    minecraft = rootProject.minecraft_version
+}
+
+// Configure all subprojects (common/, fabric/, neoforge/)
+subprojects {
+    apply plugin: "java"
+    apply plugin: "architectury-plugin"
+    apply plugin: "dev.architectury.loom"
+
+    loom {
+        silentMojangMappingsLicense()
+    }
+
+    repositories {
+        // ParchmentMC for mappings
+        maven {
+            name = 'ParchmentMC'
+            url = 'https://maven.parchmentmc.org'
+        }
+        maven { url "https://maven.fabricmc.net/" }
+        // Terraformers maven for ModMenu
+        maven {
+            name = "TerraformersMC"
+            url = "https://maven.terraformersmc.com/"
+        }
+        // Fuzs Mod Resources for Forge Config API Port
+        maven {
+            name = "Fuzs Mod Resources"
+            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
+        }
+        // Maven Central for Night Config dependencies
+        mavenCentral()
+    }
+
+    dependencies {
+        minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
+        mappings loom.layered() {
+            officialMojangMappings()
+            parchment("org.parchmentmc.data:parchment-${rootProject.parchment_version}")
+        }
+        // Depend on Fabric loader here to use the fabric @Environment annotations
+        // This is needed for client-side code separation across all loaders
+        // Do NOT use other Fabric classes in common code
+        modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+    }
+
+    // Configure Java toolchain to use JDK 21 for the build
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    // Ensure all Java compilation uses UTF-8 encoding and produces Java 17 bytecode
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = "UTF-8"
+        options.release = 17
+    }
+
+    // Generate sources JAR for all subprojects (helpful for debugging)
+    java {
+        withSourcesJar()
+    }
+}
+
+// Task to collect all production JARs into a single directory
+tasks.register('collectProductionJars', Copy) {
+    description = "Collect all production JARs from all loaders into dist/ directory"
+    group = "build"
+
+    // Create output directory
+    def outputDir = layout.buildDirectory.dir("dist")
+    into outputDir
+
+    // Collect production JARs from each loader module
+    from("fabric/build/libs") {
+        include "*-fabric-*.jar"
+        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+    }
+
+    from("neoforge/build/libs") {
+        include "*-neoforge-*.jar"
+        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+    }
+
+    // Only copy files that exist
+    eachFile { file ->
+        if (!file.file.exists()) {
+            exclude file.path
+        }
+    }
+
+    doLast {
+        println "\nProduction JARs collected to: ${outputDir.get()}"
+        fileTree(outputDir).visit { file ->
+            if (!file.isDirectory()) {
+                println "  - ${file.name}"
+            }
+        }
+    }
+}
+
+// Make sure JARs are built before collecting
+collectProductionJars.dependsOn {
+    tasks.matching { task -> task.name == "remapJar" || task.name == "jar" }
+}
+
+// Also collect after each loader module builds
+project(":fabric").build.finalizedBy(collectProductionJars)
+project(":neoforge").build.finalizedBy(collectProductionJars)
+
+// Configure all projects (root + subprojects)
+allprojects {
+    apply plugin: "java"
+    apply plugin: "maven-publish"
+
+    // Set consistent project metadata across all loaders
+    // Custom jar naming will be handled in individual subprojects
+    archivesBaseName = rootProject.mod_id
+    version = rootProject.version
+    group = rootProject.group
+
+    // Configure Java toolchain to use JDK 21 for the build
+    java {
+        toolchain {
+            languageVersion = JavaLanguageVersion.of(21)
+        }
+    }
+
+    // Consistent Java compilation settings
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = "UTF-8"
+        options.release = 17
+    }
+
+    // Generate sources for all projects
+    java {
+        withSourcesJar()
+    }
+}
+
+

@@ -1,0 +1,37 @@
+modLoader = "javafml"
+loaderVersion = "${neoforge_loader_version_range}"
+issueTrackerURL = "https://github.com/demistorm/stormies-spiders/issues"
+license = "${license}"
+
+[[mods]]
+modId = "${mod_id}" #mandatory
+version = "${version}" #mandatory
+displayName = "${mod_name}" #mandatory
+displayURL = "https://modrinth.com/mod/stormies-spiders"
+logoFile="${mod_id}.png"
+credits="${credits}"
+authors = "${mod_author}"
+description = '''
+${description}
+
+Support me on Ko-Fi: https://ko-fi.com/hstorm
+
+Discord: https://discord.gg/7uttzPbTGq
+'''
+
+[[mixins]]
+config = "${mod_id}.mixins.json"
+
+[[dependencies.${mod_id}]]
+modId = "neoforge"
+mandatory = true
+versionRange = "${neoforge_loader_version_range}"
+ordering = "NONE"
+side = "BOTH"
+
+[[dependencies.${mod_id}]]
+modId = "minecraft"
+mandatory = true
+versionRange = "${minecraft_version_range}"
+ordering = "NONE"
+side = "BOTH"

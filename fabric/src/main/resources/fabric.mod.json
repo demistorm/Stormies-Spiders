@@ -1,0 +1,51 @@
+{
+    "schemaVersion": 1,
+    "id": "${mod_id}",
+    "version": "${version}",
+    "name": "${mod_name}",
+    "description": "${description}",
+    "authors": [
+        "${mod_author}"
+    ],
+    "contact": {
+        "homepage": "https://fabricmc.net/",
+        "sources": "https://github.com/demistorm/stormies-spiders",
+        "issues": "https://github.com/demistorm/stormies-spiders/issues"
+    },
+    "license": "${license}",
+    "icon": "${mod_id}.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "win.demistorm.stormiespiders.StormiesSpiders"
+        ],
+        "client": [
+            "win.demistorm.stormiespiders.fabric.FabricClientSetup"
+        ],
+        "modmenu": [
+            "win.demistorm.stormiespiders.fabric.FabricConfigScreen"
+        ]
+    },
+    "mixins": [
+        "${mod_id}.mixins.json"
+    ],
+    "depends": {
+        "fabricloader": ">=${fabric_loader_version}",
+        "fabric-api": "*",
+        "minecraft": "${minecraft_version}",
+        "java": ">=${java_version}"
+    },
+    "suggests": {
+        "modmenu": "*"
+    },
+    "custom": {
+        "modmenu": {
+            "links": {
+                "modmenu.discord": "https://discord.gg/7uttzPbTGq",
+                "modmenu.kofi": "https://ko-fi.com/hstorm"
+            }
+        }
+    },
+    "accessWidener": "${mod_id}.accesswidener"
+}
+  

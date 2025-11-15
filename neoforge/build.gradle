@@ -1,0 +1,106 @@
+plugins {
+    id "com.github.johnrengelman.shadow" version "7.1.2"
+}
+
+repositories {
+    maven {
+        url "https://maven.neoforged.net/releases/"
+    }
+}
+
+architectury {
+    platformSetupLoomIde()
+    neoForge()
+}
+
+loom {
+    def aw = project(":common").file("src/main/resources/${mod_id}.accesswidener")
+    if (aw.exists()) {
+        accessWidenerPath.set(aw)
+    }
+}
+
+configurations {
+    common
+    shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+    compileClasspath.extendsFrom common
+    runtimeClasspath.extendsFrom common
+    developmentNeoForge.extendsFrom common
+}
+
+dependencies {
+    neoForge "net.neoforged:neoforge:${neoforge_version}"
+
+    common(project(path: ":common", configuration: "namedElements")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
+}
+
+// Custom jar naming: stormiespiders-neoforge-1.20.4-3.0.0.jar
+archivesBaseName = "${rootProject.mod_id}-neoforge-${rootProject.minecraft_version}"
+version = rootProject.version
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mod_id", project.mod_id
+    inputs.property "mod_name", project.mod_name
+    inputs.property "mod_author", project.mod_author
+    inputs.property "license", project.license
+    inputs.property "credits", project.credits
+    inputs.property "description", project.description
+    inputs.property "neoforge_loader_version_range", project.neoforge_loader_version_range
+    inputs.property "minecraft_version_range", project.minecraft_version_range
+
+    filesMatching("META-INF/mods.toml") {
+        expand "version": project.version,
+               "mod_id": project.mod_id,
+               "mod_name": project.mod_name,
+               "mod_author": project.mod_author,
+               "license": project.license,
+               "credits": project.credits,
+               "description": project.description,
+               "neoforge_loader_version_range": project.neoforge_loader_version_range,
+               "minecraft_version_range": project.minecraft_version_range
+    }
+}
+
+shadowJar {
+    exclude "architectury.common.json"
+
+    configurations = [project.configurations.shadowCommon]
+    archiveClassifier = "dev-shadow"
+}
+
+remapJar {
+    input.set shadowJar.archiveFile
+    dependsOn shadowJar
+    archiveClassifier = null
+}
+
+jar {
+    archiveClassifier = "dev"
+}
+
+sourcesJar {
+    def commonSources = project(":common").sourcesJar
+    dependsOn commonSources
+    from commonSources.archiveFile.map { zipTree(it) }
+}
+
+components.java {
+    withVariantsFromConfiguration(project.configurations.shadowRuntimeElements) {
+        skip()
+    }
+}
+
+publishing {
+    publications {
+        mavenNeoForge(MavenPublication) {
+            artifactId = rootProject.mod_id + "-" + project.name
+            from components.java
+        }
+    }
+
+    repositories {
+        // Add repositories to publish to here
+    }
+}

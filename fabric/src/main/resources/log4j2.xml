@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Properties>
+        <Property name="LogPattern">[%d{HH:mm:ss}] [%t/%level]: %msg%n</Property>
+    </Properties>
+
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="${LogPattern}"/>
+        </Console>
+    </Appenders>
+
+    <Loggers>
+        <!-- Filter out NeoForge attribute warnings on Fabric -->
+        <Logger name="net.minecraft.class_5131" level="INFO" additivity="false">
+            <RegexFilter regex=".*neoforge:(step_height|entity_gravity).*" onMatch="DENY" onMismatch="NEUTRAL"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+
+        <!-- Default logger for all other messages -->
+        <Root level="INFO">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>
