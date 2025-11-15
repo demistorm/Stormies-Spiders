@@ -103,9 +103,7 @@ public abstract class EntityMixin implements IEntityMovementHook, IEntityReadWri
 	@Override
 	public void onWrite(CompoundTag nbt) { }
 
-	@Shadow(prefix = "shadow$")
-	private void shadow$defineSynchedData() { }
-
+	
 //	@Redirect(method = "<init>*", at = @At(
 //			value = "INVOKE",
 //			target = "Lnet/minecraft/world/entity/Entity;defineSynchedData()V"
