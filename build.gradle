@@ -62,10 +62,10 @@ subprojects {
         }
     }
 
-    // Ensure all Java compilation uses UTF-8 encoding and produces Java 17 bytecode
+    // Ensure all Java compilation uses UTF-8 encoding and produces Java 21 bytecode
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 17
+        options.release = 21
     }
 
     // Generate sources JAR for all subprojects (helpful for debugging)
@@ -141,7 +141,7 @@ allprojects {
     // Consistent Java compilation settings
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 17
+        options.release = 21
     }
 
     // Generate sources for all projects
