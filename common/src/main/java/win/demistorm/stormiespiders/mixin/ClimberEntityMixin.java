@@ -153,10 +153,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			ordinal = 0
 			))
 	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
-		// First, let the original call happen
+		// Let the original call happen
 		SynchedEntityData.Builder result = builder.define(accessor, value);
 
-		// Then add our custom data definitions
+		// Then add custom data definitions
 		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
 		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
 
