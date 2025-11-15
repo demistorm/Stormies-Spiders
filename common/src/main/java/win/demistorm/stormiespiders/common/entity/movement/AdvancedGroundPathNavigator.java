@@ -166,7 +166,6 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 					if(nodeType == BlockPathTypes.BLOCKED) {
 						VoxelShape collisionShape = state.getShape(this.advancedPathFindingEntity.level(), pos, CollisionContext.of(this.advancedPathFindingEntity)).move(pos.getX(), pos.getY(), pos.getZ());
 
-						//TODO Use ILineConsumer
 						if(collisionShape != null && collisionShape.toAabbs().stream().anyMatch(aabb -> aabb.intersects(checkBox))) {
 							blocked = true;
 							break loop;

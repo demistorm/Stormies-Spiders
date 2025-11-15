@@ -76,8 +76,6 @@ public class CustomPathFinder extends PathFinder {
 		return path;
 	}
 
-	//TODO Re-implement custom heuristics
-
 	@Nullable
 	private Path findPath(Node start, Map<Target, BlockPos> checkpointsMap, float maxDistance, int checkpointRange, float maxExpansionsMultiplier) {
 		Set<Target> checkpoints = checkpointsMap.keySet();
@@ -115,7 +113,7 @@ public class CustomPathFinder extends PathFinder {
 				for(int i = 0; i < numOptions; ++i) {
 					Node successorPathPoint = this.pathOptions[i];
 
-					float costHeuristic = openPathPoint.distanceTo(successorPathPoint); //TODO Replace with cost heuristic
+					float costHeuristic = openPathPoint.distanceTo(successorPathPoint);
 
 					//walkedDistance corresponds to the total path cost of the evaluation function
 					successorPathPoint.walkedDistance = openPathPoint.walkedDistance + costHeuristic;
@@ -127,7 +125,7 @@ public class CustomPathFinder extends PathFinder {
 						successorPathPoint.g = totalSuccessorPathCost;
 
 						//distanceToNext corresponds to the heuristic part of the evaluation function
-						successorPathPoint.h = this.computeHeuristic(successorPathPoint, checkpoints) * 1.0f; //TODO Vanilla's 1.5 multiplier is too greedy :( Move to custom heuristic stuff
+						successorPathPoint.h = this.computeHeuristic(successorPathPoint, checkpoints) * 1.0f;
 
 						if(successorPathPoint.inOpenSet()) {
 							this.path.changeCost(successorPathPoint, successorPathPoint.g + successorPathPoint.h);
@@ -152,7 +150,7 @@ public class CustomPathFinder extends PathFinder {
 			//Use lowest cost path towards any checkpoint
 			path = checkpoints.stream().map((checkpoint) -> {
 				return this.createPath(checkpoint.getBestNode(), checkpointsMap.get(checkpoint), false);
-			}).min(Comparator.comparingDouble(Path::getDistToTarget /*TODO Replace calculation with cost heuristic*/).thenComparingInt(Path::getNodeCount));
+			}).min(Comparator.comparingDouble(Path::getDistToTarget).thenComparingInt(Path::getNodeCount));
 		}
 
 		return !path.isPresent() ? null : path.get();
@@ -162,7 +160,7 @@ public class CustomPathFinder extends PathFinder {
 		float minDst = Float.MAX_VALUE;
 
 		for(Target checkpoint : checkpoints) {
-			float dst = pathPoint.distanceTo(checkpoint); //TODO Replace with target heuristic
+			float dst = pathPoint.distanceTo(checkpoint);
 			checkpoint.updateBest(dst, pathPoint);
 			minDst = Math.min(dst, minDst);
 		}

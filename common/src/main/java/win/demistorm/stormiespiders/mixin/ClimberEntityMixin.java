@@ -502,7 +502,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			}
 		};
 
-		// todo figure out collision stuff
 		Iterable<VoxelShape> shapes =  cachedCollisionReader.getBlockCollisions(this,aabb);
 //		StreamSupport.stream(new CollisionSpliterator(cachedCollisionReader, this, aabb, this::canClimbOnBlock), false);
 

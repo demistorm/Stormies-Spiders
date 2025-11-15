@@ -272,7 +272,6 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         }
     }
 
-    //todo: fix this?
     @Override
     protected boolean canMoveDirectly(Vec3 start, Vec3 end/*, int sizeX, int sizeY, int sizeZ*/) {
         int sizeX = 0;//(int) this.mob.getBbWidth();
