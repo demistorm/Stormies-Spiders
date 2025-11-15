@@ -59,6 +59,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -146,15 +147,20 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		ci.setReturnValue(navigate);
 	}
 
-	@Inject(method = "defineSynchedData", at = @At("RETURN"))
-	public void onDefineSynchedData(CallbackInfo ci){
-		onRegisterData();
-	}
+	@Redirect(method = "defineSynchedData", at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/network/syncher/SynchedEntityData$Builder;define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;",
+			ordinal = 0
+			))
+	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
+		// First, let the original call happen
+		SynchedEntityData.Builder result = builder.define(accessor, value);
 
-	public void onRegisterData() {
-		// entityData.define signature changed in 1.21.4 - initialization handled differently
-		this.entityData.set(ROTATION_BODY, new Rotations(0, 0, 0));
-		this.entityData.set(ROTATION_HEAD, new Rotations(0, 0, 0));
+		// Then add our custom data definitions
+		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
+		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+
+		return result;
 	}
 
 	@Override
