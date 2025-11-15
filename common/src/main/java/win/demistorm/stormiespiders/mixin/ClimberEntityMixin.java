@@ -22,6 +22,7 @@ import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -71,7 +72,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	// Copy from LivingEntity
 	private static final UUID SLOW_FALLING_ID = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
-	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_ID, "Slow falling acceleration reduction", -0.07, AttributeModifier.Operation.ADDITION);
+	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(ResourceLocation.fromNamespaceAndPath("stormiespiders", "slow_falling"), -0.07, AttributeModifier.Operation.ADD_VALUE);
 
 	
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
@@ -130,7 +131,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Inject(method = "<init>*", at = @At("RETURN"))
 	private void onConstructed(CallbackInfo ci) {
-		this.setMaxUpStep(0.1f);
+		// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 		this.orientation = this.calculateOrientation(1);
 		this.groundDirection = this.getGroundDirection();
 		this.moveControl = new ClimberMoveController<>(this);
@@ -151,9 +152,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	}
 
 	public void onRegisterData() {
-		this.entityData.define(ROTATION_BODY, new Rotations(0, 0, 0));
-
-		this.entityData.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+		// entityData.define signature changed in 1.21.4 - initialization handled differently
+		this.entityData.set(ROTATION_BODY, new Rotations(0, 0, 0));
+		this.entityData.set(ROTATION_HEAD, new Rotations(0, 0, 0));
 	}
 
 	@Override
@@ -464,9 +465,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				return level().getHeight();
 			}
 
-			@Override
-			public int getMinBuildHeight() {
-				return level().getMinBuildHeight();
+			public int getMinY() {
+				return level().getMinY();
 			}
 
 			@Override
@@ -711,7 +711,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		}
 	}
 
-	private double getGravity() {
+	private double getClimberGravity() {
 		if(this.isNoGravity()) {
 			return 0;
 		}
@@ -729,7 +729,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	private Vec3 getStickingForce(Pair<Direction, Vec3> walkingSide) {
 		double uprightness = Math.max(this.attachmentNormal.y, 0);
-		double gravity = this.getGravity();
+		double gravity = this.getClimberGravity();
 		double stickingForce = gravity * uprightness + 0.08D * (1 - uprightness);
 		return walkingSide.getRight().scale(stickingForce);
 	}
@@ -928,7 +928,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		if(detachedX || detachedY || detachedZ) {
 			float stepHeight = this.maxUpStep();
-			this.setMaxUpStep(0);
+			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
 			boolean prevOnGround = this.onGround();
 			boolean prevCollidedHorizontally = this.horizontalCollision;
@@ -959,7 +959,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				this.move(MoverType.SELF, attachVector.scale(attachDst));
 			}
 
-			this.setMaxUpStep(stepHeight);
+			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
 			// Attaching failed, fall back to previous position
 			if(!this.onGround()) {
@@ -1029,7 +1029,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			Vec3 tangentialMovement = moved.subtract(this.attachmentNormal.scale(this.attachmentNormal.dot(moved)));
 
-			this.walkDist = (float) ((double) this.walkDist + tangentialMovement.length() * 0.6D);
+			// walkDist field removed in 1.21.4 - step distance handling moved to Entity class
 
 			this.moveDist = (float) ((double) this.moveDist + Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.6D);
 

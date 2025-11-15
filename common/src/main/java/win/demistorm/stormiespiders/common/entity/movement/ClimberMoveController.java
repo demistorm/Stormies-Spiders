@@ -9,7 +9,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.JumpControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -184,7 +184,7 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 				dz += oz;
 			}
 
-			Direction mainOffsetDir = Direction.getNearest(dx, dy, dz);
+			Direction mainOffsetDir = Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz), Direction.UP);
 
 			float reach;
 			switch(mainOffsetDir) {
@@ -246,7 +246,7 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 
 				// Prevent climbing on horizontal surfaces during rain when config is enabled
 				if(jumpDir == null && this.side != null && Math.abs(this.climber.getGroundDirection().getRight().y) > 0.5f &&
-				   (!this.climber.canAttachToSide(this.side) || !this.climber.canAttachToSide(Direction.getNearest(dx, dy, dz))) &&
+				   (!this.climber.canAttachToSide(this.side) || !this.climber.canAttachToSide(Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz), Direction.UP))) &&
 				   this.wantedY > this.mob.getY() + 0.1f && verticalOffset > 0.6f) {
 					jumpDir = new Vec3(0, 1, 0);
 				}
@@ -280,7 +280,7 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 		if(navigator != null) {
 			NodeEvaluator processor = navigator.getNodeEvaluator();
 
-			if(processor != null && processor.getBlockPathType(this.mob.level(), Mth.floor(this.mob.getX() + x), Mth.floor(this.mob.getY() + this.mob.getBbHeight() * 0.5f + y), Mth.floor(this.mob.getZ() + z)) != BlockPathTypes.WALKABLE) {
+			if(processor != null && processor.getPathType(this.mob, new BlockPos(Mth.floor(this.mob.getX() + x), Mth.floor(this.mob.getY() + this.mob.getBbHeight() * 0.5f + y), Mth.floor(this.mob.getZ() + z))) != PathType.WALKABLE) {
 				return false;
 			}
 		}

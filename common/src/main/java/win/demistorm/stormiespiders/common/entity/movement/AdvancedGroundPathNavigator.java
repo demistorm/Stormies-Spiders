@@ -9,7 +9,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.navigation.GroundPathNavigation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.BlockPathTypes;
+import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.pathfinder.PathFinder;
@@ -149,7 +149,7 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 			}
 
 			Vec3 facingDiff = checkPos.subtract(entityPos.add(0, axis == 1 ? this.mob.getBbHeight() / 2 : 0, 0));
-			Direction facing = Direction.getNearest((float)facingDiff.x, (float)facingDiff.y, (float)facingDiff.z);
+			Direction facing = Direction.getNearest(Mth.floor(facingDiff.x), Mth.floor(facingDiff.y), Mth.floor(facingDiff.z), Direction.UP);
 
 			boolean blocked = false;
 
@@ -161,9 +161,9 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 
 					BlockState state = this.advancedPathFindingEntity.level().getBlockState(pos);
 
-					BlockPathTypes nodeType = state.isPathfindable(this.advancedPathFindingEntity.level(), pos, PathComputationType.LAND) ? BlockPathTypes.OPEN : BlockPathTypes.BLOCKED;
+					PathType nodeType = state.isPathfindable(PathComputationType.LAND) ? PathType.OPEN : PathType.BLOCKED;
 
-					if(nodeType == BlockPathTypes.BLOCKED) {
+					if(nodeType == PathType.BLOCKED) {
 						VoxelShape collisionShape = state.getShape(this.advancedPathFindingEntity.level(), pos, CollisionContext.of(this.advancedPathFindingEntity)).move(pos.getX(), pos.getY(), pos.getZ());
 
 						if(collisionShape != null && collisionShape.toAabbs().stream().anyMatch(aabb -> aabb.intersects(checkBox))) {
