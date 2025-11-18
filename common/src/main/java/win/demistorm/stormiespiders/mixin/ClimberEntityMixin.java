@@ -704,8 +704,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
-			this.lerpYRot = rotations.getLeft();
-			this.lerpXRot = rotations.getRight();
+			// Allegedly will be handled automatically
+//			this.lerpYRot = rotations.getLeft();
+//			this.lerpXRot = rotations.getRight();
 		} else if(ROTATION_HEAD.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_HEAD);
 			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
@@ -783,7 +784,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	@Override
 	public boolean onTravel(Vec3 relative, boolean pre) {
 		if(pre) {
-			boolean canTravel = this.isEffectiveAi() || this.isControlledByLocalInstance();
+			boolean canTravel = this.isEffectiveAi() || this.isLocalClientAuthoritative();
 
 			this.isTravelingInFluid = false;
 
