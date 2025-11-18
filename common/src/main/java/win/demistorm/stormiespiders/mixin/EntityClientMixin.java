@@ -10,9 +10,10 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(Entity.class)
 public abstract class EntityClientMixin implements IEntityRotationHook {
 
-    @ModifyVariable(method = "moveOrInterpolateTo", at = @At(value = "HEAD"), ordinal = 1)
-    private float onSetPositionAndRotationDirectYaw(float yaw, Vec3 pos, float yaw2, float pitch) {
-        return this.getTargetYaw(pos.x, pos.y, pos.z, yaw, pitch, 0);
+    // ordinal = 0 for yRot (first float)
+    @ModifyVariable(method = "moveOrInterpolateTo", at = @At(value = "HEAD"), ordinal = 0)
+    private float onSetPositionAndRotationDirectYaw(float yRot, Vec3 pos, float xRot) {
+        return this.getTargetYaw(pos.x, pos.y, pos.z, yRot, xRot, 0);
     }
 
     @Override
@@ -20,9 +21,10 @@ public abstract class EntityClientMixin implements IEntityRotationHook {
         return yaw;
     }
 
-    @ModifyVariable(method = "moveOrInterpolateTo", at = @At(value = "HEAD"), ordinal = 2)
-    private float onSetPositionAndRotationDirectPitch(float pitch, Vec3 pos, float yaw, float pitch2) {
-        return this.getTargetPitch(pos.x, pos.y, pos.z, yaw, pitch, 0);
+    // ordinal = 1 for xRot (second float)
+    @ModifyVariable(method = "moveOrInterpolateTo", at = @At(value = "HEAD"), ordinal = 1)
+    private float onSetPositionAndRotationDirectPitch(float xRot, Vec3 pos, float yRot) {
+        return this.getTargetPitch(pos.x, pos.y, pos.z, yRot, xRot, 0);
     }
 
     @Override

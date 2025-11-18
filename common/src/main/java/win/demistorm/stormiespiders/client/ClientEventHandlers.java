@@ -103,34 +103,15 @@ public class ClientEventHandlers {
 		}
 
 		// Clean up old cache entries periodically to prevent memory leaks
-		climberDataCache.clear();
+		if (Math.random() < 0.01) { // 1% chance to clean up each frame
+			climberDataCache.clear();
+		}
 	}
 
 	private static ClimberRenderData findClimberDataForRenderState(LivingEntityRenderState renderState) {
-		// Try to find the climber data by matching entity characteristics
-		// Since LivingEntityRenderState doesn't directly expose entity ID,
-		// we'll need to find the matching climber by checking the actual entities
-		for (Map.Entry<Integer, ClimberRenderData> entry : climberDataCache.entrySet()) {
-			ClimberRenderData data = entry.getValue();
-			IClimberEntity climber = data.climber;
-
-			// Check if this climber's entity data matches the render state
-			if (matchesRenderState(climber, renderState)) {
-				return data;
-			}
-		}
-		return null;
-	}
-
-	private static boolean matchesRenderState(IClimberEntity climber, LivingEntityRenderState renderState) {
-		// Match based on position, health, and other observable properties
-		if (climber instanceof LivingEntity entity) {
-			return Math.abs(entity.getX() - renderState.x) < 0.01 &&
-				   Math.abs(entity.getY() - renderState.y) < 0.01 &&
-				   Math.abs(entity.getZ() - renderState.z) < 0.01 &&
-				   Math.abs(entity.getHealth() - renderState.health) < 0.01f;
-		}
-		return false;
+		// Simplified approach - return the most recent climber data
+		// This matches the original 1.21.4 implementation
+		return climberDataCache.values().stream().findFirst().orElse(null);
 	}
 
 	private static void applyClimberTransformPre(ClimberRenderData data, PoseStack matrixStack) {
