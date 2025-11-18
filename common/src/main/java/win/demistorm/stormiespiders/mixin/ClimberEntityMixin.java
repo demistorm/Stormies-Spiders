@@ -616,20 +616,18 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.prevOrientationYawDelta = this.orientationYawDelta;
 		this.orientationYawDelta = yawDelta;
 
+		// Set current rotation values for 1.21.5 interpolation system
+		this.yRotO = this.yRot;
 		this.yRot = Mth.wrapDegrees(this.yRot + yawDelta);
-		this.yRotO = this.wrapAngleInRange(this.yRotO/* + yawDelta*/, this.yRot);
-		this.lerpYRot = Mth.wrapDegrees(this.lerpYRot + yawDelta);
 
+		this.yBodyRotO = this.yBodyRot;
 		this.yBodyRot = Mth.wrapDegrees(this.yBodyRot + yawDelta);
-		this.yBodyRotO = this.wrapAngleInRange(this.yBodyRotO/* + yawDelta*/, this.yBodyRot);
 
+		this.yHeadRotO = this.yHeadRot;
 		this.yHeadRot = Mth.wrapDegrees(this.yHeadRot + yawDelta);
-		this.yHeadRotO = this.wrapAngleInRange(this.yHeadRotO/* + yawDelta*/, this.yHeadRot);
-		this.lerpYHeadRot = Mth.wrapDegrees(this.lerpYHeadRot + yawDelta);
 
+		this.xRotO = this.xRot;
 		this.xRot = Mth.wrapDegrees(this.xRot + pitchDelta);
-		this.xRotO = this.wrapAngleInRange(this.xRotO/* + pitchDelta*/, this.xRot);
-		this.lerpXRot = Mth.wrapDegrees(this.lerpXRot + pitchDelta);
 	}
 
 	private float wrapAngleInRange(float angle, float target) {
@@ -683,12 +681,14 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getTargetYaw(double x, double y, double z, float yaw, float pitch, int posRotationIncrements) {
-		return (float) this.lerpYRot;
+		// Return the entity's current yaw - the interpolation system will handle smooth transitions
+		return this.yRot;
 	}
 
 	@Override
 	public float getTargetPitch(double x, double y, double z, float yaw, float pitch, int posRotationIncrements) {
-		return (float) this.lerpXRot;
+		// Return the entity's current pitch - the interpolation system will handle smooth transitions
+		return this.xRot;
 	}
 
 	@Override
