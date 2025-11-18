@@ -9,7 +9,7 @@ import win.demistorm.stormiespiders.common.entity.mob.IEntityReadWriteHook;
 import win.demistorm.stormiespiders.common.entity.mob.ILivingEntityDataManagerHook;
 import win.demistorm.stormiespiders.common.entity.mob.ILivingEntityJumpHook;
 import win.demistorm.stormiespiders.common.entity.mob.ILivingEntityLookAtHook;
-import win.demistorm.stormiespiders.common.entity.mob.ILivingEntityRotationHook;
+import win.demistorm.stormiespiders.common.entity.mob.IEntityRotationHook;
 import win.demistorm.stormiespiders.common.entity.mob.ILivingEntityTravelHook;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityLivingTickHook;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityTickHook;
@@ -69,7 +69,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Mixin(value = { Spider.class })
-public abstract class ClimberEntityMixin extends PathfinderMob implements IClimberEntity, IMobEntityLivingTickHook, ILivingEntityLookAtHook, IMobEntityTickHook, ILivingEntityRotationHook, ILivingEntityDataManagerHook, ILivingEntityTravelHook, IEntityMovementHook, IEntityReadWriteHook, ILivingEntityJumpHook {
+public abstract class ClimberEntityMixin extends PathfinderMob implements IClimberEntity, IMobEntityLivingTickHook, ILivingEntityLookAtHook, IMobEntityTickHook, IEntityRotationHook, ILivingEntityDataManagerHook, ILivingEntityTravelHook, IEntityMovementHook, IEntityReadWriteHook, ILivingEntityJumpHook {
 
 	// Copy from LivingEntity
 	private static final UUID SLOW_FALLING_ID = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
@@ -175,12 +175,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	@Override
 	public void onRead(CompoundTag nbt) {
 		this.prevAttachmentNormal = this.attachmentNormal = new Vec3(
-				nbt.getDouble("stormiespiders.AttachmentNormalX"),
-				nbt.getDouble("stormiespiders.AttachmentNormalY"),
-				nbt.getDouble("stormiespiders.AttachmentNormalZ")
+				nbt.contains("stormiespiders.AttachmentNormalX") ? nbt.getDouble("stormiespiders.AttachmentNormalX").get() : 0.0,
+				nbt.contains("stormiespiders.AttachmentNormalY") ? nbt.getDouble("stormiespiders.AttachmentNormalY").get() : 1.0,
+				nbt.contains("stormiespiders.AttachmentNormalZ") ? nbt.getDouble("stormiespiders.AttachmentNormalZ").get() : 0.0
 				);
 
-		this.attachedTicks = nbt.getInt("stormiespiders.AttachedTicks");
+		this.attachedTicks = nbt.contains("stormiespiders.AttachedTicks") ? nbt.getInt("stormiespiders.AttachedTicks").get() : 5;
 
 		this.orientation = this.calculateOrientation(1);
 	}
@@ -700,7 +700,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
 		if(ROTATION_BODY.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_BODY);
-			Vec3 look = new Vec3(rotation.getX(), rotation.getY(), rotation.getZ());
+			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
@@ -708,7 +708,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			this.lerpXRot = rotations.getRight();
 		} else if(ROTATION_HEAD.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_HEAD);
-			Vec3 look = new Vec3(rotation.getX(), rotation.getY(), rotation.getZ());
+			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
@@ -755,8 +755,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		if(this.jumpDir != null) {
 			float jumpStrength = this.getJumpPower();
-			if(this.hasEffect(MobEffects.JUMP)) {
-				jumpStrength += 0.1F * (float)(this.getEffect(MobEffects.JUMP).getAmplifier() + 1);
+			if(this.hasEffect(MobEffects.JUMP_BOOST)) {
+				jumpStrength += 0.1F * (float)(this.getEffect(MobEffects.JUMP_BOOST).getAmplifier() + 1);
 			}
 
 			Vec3 motion = this.getDeltaMovement();
