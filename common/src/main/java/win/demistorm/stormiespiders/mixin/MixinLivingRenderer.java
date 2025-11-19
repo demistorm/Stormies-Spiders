@@ -1,6 +1,8 @@
 package win.demistorm.stormiespiders.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.world.phys.Vec3;
+import org.apache.commons.lang3.tuple.Pair;
 import win.demistorm.stormiespiders.client.ClientEventHandlers;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
@@ -25,16 +27,8 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
-        // Store climber-specific data in the render state for use during rendering
         if (entity instanceof IClimberEntity climber) {
-            Orientation orientation = climber.getOrientation();
-            Orientation renderOrientation = climber.calculateOrientation(partialTick);
-            climber.setRenderOrientation(renderOrientation);
-
-            float verticalOffset = climber.getVerticalOffset(partialTick);
-
-            // Store the necessary climber data for the render hook
-            // We'll access this via the ClientEventHandlers in the render method
+            // DON'T modify renderState.yRot/xRot - let PoseStack handle it all
             ClientEventHandlers.storeClimberData(entity, climber, partialTick);
         }
     }

@@ -75,9 +75,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	private static final UUID SLOW_FALLING_ID = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
 	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(ResourceLocation.fromNamespaceAndPath("stormiespiders", "slow_falling"), -0.07, AttributeModifier.Operation.ADD_VALUE);
 
-	
+
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
 	private static final EntityDataAccessor<Rotations> ROTATION_HEAD;
+	private static final EntityDataAccessor<Rotations> ATTACHMENT_NORMAL;
 
 	static {
 		@SuppressWarnings("unchecked")
@@ -85,6 +86,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		ROTATION_BODY = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 		ROTATION_HEAD = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
+		ATTACHMENT_NORMAL = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 	}
 
 	private double prevAttachmentOffsetX, prevAttachmentOffsetY, prevAttachmentOffsetZ;
@@ -151,7 +153,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			value = "INVOKE",
 			target = "Lnet/minecraft/network/syncher/SynchedEntityData$Builder;define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;",
 			ordinal = 0
-			))
+	))
 	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
 		// Let the original call happen
 		SynchedEntityData.Builder result = builder.define(accessor, value);
@@ -159,6 +161,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		// Then add custom data definitions
 		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
 		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+		builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
 
 		return result;
 	}
@@ -427,7 +430,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				look = orientation.getGlobal(this.yHeadRot, 0.0f);
 				this.entityData.set(ROTATION_HEAD, new Rotations((float) look.x, (float) look.y, (float) look.z));
 
-							}
+				// Sync attachment normal to client
+				this.entityData.set(ATTACHMENT_NORMAL, new Rotations(
+						(float) this.attachmentNormal.x,
+						(float) this.attachmentNormal.y,
+						(float) this.attachmentNormal.z
+				));
+			}
 		}
 	}
 
@@ -586,6 +595,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 					this.lastAttachmentOrientationNormal = attachmentPoint.getRight();
 				}
 			}
+			// ADD DEBUG LOGGING HERE:
+			System.out.println("=== Spider Debug ===");
+			System.out.println("onGround: " + this.onGround());
+			System.out.println("isTravelingInFluid: " + this.isTravelingInFluid);
+			System.out.println("isAttached: " + isAttached);
+			System.out.println("attachedTicks: " + this.attachedTicks);
+			System.out.println("lastAttachmentOrientationNormal: " + this.lastAttachmentOrientationNormal);
 		}
 
 		this.prevAttachmentOffsetX = this.attachmentOffsetX;
@@ -595,10 +611,17 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		float attachmentBlend = this.attachedTicks * 0.2f;
 
+		// ADD MORE DEBUG HERE:
+		System.out.println("attachmentBlend: " + attachmentBlend);
+
 		this.attachmentOffsetX = baseStickingOffsetX + (this.lastAttachmentOffsetX - baseStickingOffsetX) * attachmentBlend;
 		this.attachmentOffsetY = baseStickingOffsetY + (this.lastAttachmentOffsetY - baseStickingOffsetY) * attachmentBlend;
 		this.attachmentOffsetZ = baseStickingOffsetZ + (this.lastAttachmentOffsetZ - baseStickingOffsetZ) * attachmentBlend;
 		this.attachmentNormal = baseOrientationNormal.add(this.lastAttachmentOrientationNormal.subtract(baseOrientationNormal).scale(attachmentBlend)).normalize();
+
+		// AND HERE:
+		System.out.println("Final attachmentNormal: " + this.attachmentNormal);
+		System.out.println("===================");
 
 		if(!isAttached) {
 			this.attachedTicks = Math.max(0, this.attachedTicks - 1);
@@ -704,9 +727,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
-			// Allegedly will be handled automatically
-//			this.lerpYRot = rotations.getLeft();
-//			this.lerpXRot = rotations.getRight();
+			// Allegedly will be handled automatically (yeah not so sure)
+			this.yRot = rotations.getLeft();
+			this.xRot = rotations.getRight();
 		} else if(ROTATION_HEAD.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_HEAD);
 			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
@@ -715,6 +738,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			this.lerpYHeadRot = rotations.getLeft();
 			this.lerpHeadSteps = 3;
+		} else if(ATTACHMENT_NORMAL.equals(key)) {
+			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
+			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
+			this.prevAttachmentNormal = this.attachmentNormal;
 		}
 	}
 
