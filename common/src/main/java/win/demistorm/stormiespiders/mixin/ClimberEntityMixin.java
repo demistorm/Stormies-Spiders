@@ -79,6 +79,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
 	private static final EntityDataAccessor<Rotations> ROTATION_HEAD;
 	private static final EntityDataAccessor<Rotations> ATTACHMENT_NORMAL;
+	private static final EntityDataAccessor<Rotations> ATTACHMENT_OFFSET;
 
 	static {
 		@SuppressWarnings("unchecked")
@@ -87,6 +88,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		ROTATION_BODY = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 		ROTATION_HEAD = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 		ATTACHMENT_NORMAL = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
+		ATTACHMENT_OFFSET = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 	}
 
 	private double prevAttachmentOffsetX, prevAttachmentOffsetY, prevAttachmentOffsetZ;
@@ -162,6 +164,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
 		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
 		builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
+		builder.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
 
 		return result;
 	}
@@ -420,21 +423,18 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		if(!this.level().isClientSide && this.level() instanceof ServerLevel) {
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
-			// Prevent premature syncing of position causing overly smoothed movement
-			if(entityTracker != null && entityTracker.serverEntity.tickCount % entityTracker.serverEntity.updateInterval == 0) {
-				Orientation orientation = this.getOrientation();
-
-				Vec3 look = orientation.getGlobal(this.getYRot(), this.getXRot());
-				this.entityData.set(ROTATION_BODY, new Rotations((float) look.x, (float) look.y, (float) look.z));
-
-				look = orientation.getGlobal(this.yHeadRot, 0.0f);
-				this.entityData.set(ROTATION_HEAD, new Rotations((float) look.x, (float) look.y, (float) look.z));
-
-				// Sync attachment normal to client
+			if(entityTracker != null) {
+				// Sync attachment data
 				this.entityData.set(ATTACHMENT_NORMAL, new Rotations(
 						(float) this.attachmentNormal.x,
 						(float) this.attachmentNormal.y,
 						(float) this.attachmentNormal.z
+				));
+
+				this.entityData.set(ATTACHMENT_OFFSET, new Rotations(
+						(float) this.attachmentOffsetX,
+						(float) this.attachmentOffsetY,
+						(float) this.attachmentOffsetZ
 				));
 			}
 		}
@@ -564,78 +564,92 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		double baseStickingOffsetZ = 0.0f;
 		Vec3 baseOrientationNormal = new Vec3(0, 1, 0);
 
-		// Prevent climbing attachment during rain when config is enabled
-		if(Config.COMMON.preventClimbingInRain() && this.level().isRaining() &&
-		   this.level().isRainingAt(new BlockPos((int)this.getX(), (int)(this.getY() + this.getBbHeight() * 0.5f), (int)this.getZ()))) {
-			// Skip attachment logic entirely during rain
-			isAttached = false;
-		} else if(!this.isTravelingInFluid && this.onGround()&& this.getVehicle() == null) {
-			Vec3 p = this.position();
 
-			Vec3 s = p.add(0, this.getBbHeight() * 0.5f, 0);
-			AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(this.collisionsInclusionRange);
+		// ONLY calculate attachments on server
+		if (!this.level().isClientSide) {
+			// Prevent climbing attachment during rain when config is enabled
+			if (Config.COMMON.preventClimbingInRain() && this.level().isRaining() &&
+					this.level().isRainingAt(new BlockPos((int) this.getX(), (int) (this.getY() + this.getBbHeight() * 0.5f), (int) this.getZ()))) {
+				// Skip attachment logic entirely during rain
+				isAttached = false;
+			} else if (!this.isTravelingInFluid && this.onGround() && this.getVehicle() == null) {
+				Vec3 p = this.position();
 
-			Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(consumer -> this.forEachCollisonBox(inclusionBox, consumer), s, this.attachmentNormal.scale(-1), this.collisionsSmoothingRange, 1.0f, 0.001f, 20, 0.05f, s);
+				Vec3 s = p.add(0, this.getBbHeight() * 0.5f, 0);
+				AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(this.collisionsInclusionRange);
 
-			AABB entityBox = this.getBoundingBox();
+				Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(consumer -> this.forEachCollisonBox(inclusionBox, consumer), s, this.attachmentNormal.scale(-1), this.collisionsSmoothingRange, 1.0f, 0.001f, 20, 0.05f, s);
 
-			if(attachmentPoint != null) {
-				Vec3 attachmentPos = attachmentPoint.getLeft();
+				AABB entityBox = this.getBoundingBox();
 
-				double dx = Math.max(entityBox.minX - attachmentPos.x, attachmentPos.x - entityBox.maxX);
-				double dy = Math.max(entityBox.minY - attachmentPos.y, attachmentPos.y - entityBox.maxY);
-				double dz = Math.max(entityBox.minZ - attachmentPos.z, attachmentPos.z - entityBox.maxZ);
+				if (attachmentPoint != null) {
+					Vec3 attachmentPos = attachmentPoint.getLeft();
 
-				if(Math.max(dx, Math.max(dy, dz)) < 0.5f) {
-					isAttached = true;
+					double dx = Math.max(entityBox.minX - attachmentPos.x, attachmentPos.x - entityBox.maxX);
+					double dy = Math.max(entityBox.minY - attachmentPos.y, attachmentPos.y - entityBox.maxY);
+					double dz = Math.max(entityBox.minZ - attachmentPos.z, attachmentPos.z - entityBox.maxZ);
 
-					this.lastAttachmentOffsetX = Mth.clamp(attachmentPos.x - p.x, -this.getBbWidth() / 2, this.getBbWidth() / 2);
-					this.lastAttachmentOffsetY = Mth.clamp(attachmentPos.y - p.y, 0, this.getBbHeight());
-					this.lastAttachmentOffsetZ = Mth.clamp(attachmentPos.z - p.z, -this.getBbWidth() / 2, this.getBbWidth() / 2);
-					this.lastAttachmentOrientationNormal = attachmentPoint.getRight();
+					if (Math.max(dx, Math.max(dy, dz)) < 0.5f) {
+						isAttached = true;
+
+						this.lastAttachmentOffsetX = Mth.clamp(attachmentPos.x - p.x, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+						this.lastAttachmentOffsetY = Mth.clamp(attachmentPos.y - p.y, 0, this.getBbHeight());
+						this.lastAttachmentOffsetZ = Mth.clamp(attachmentPos.z - p.z, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+						this.lastAttachmentOrientationNormal = attachmentPoint.getRight();
+					}
 				}
+				// ADD DEBUG LOGGING HERE:
+				System.out.println("=== Spider Debug ===");
+				System.out.println("onGround: " + this.onGround());
+				System.out.println("isTravelingInFluid: " + this.isTravelingInFluid);
+				System.out.println("isAttached: " + isAttached);
+				System.out.println("attachedTicks: " + this.attachedTicks);
+				System.out.println("lastAttachmentOrientationNormal: " + this.lastAttachmentOrientationNormal);
 			}
-			// ADD DEBUG LOGGING HERE:
-			System.out.println("=== Spider Debug ===");
-			System.out.println("onGround: " + this.onGround());
-			System.out.println("isTravelingInFluid: " + this.isTravelingInFluid);
-			System.out.println("isAttached: " + isAttached);
-			System.out.println("attachedTicks: " + this.attachedTicks);
-			System.out.println("lastAttachmentOrientationNormal: " + this.lastAttachmentOrientationNormal);
-		}
 
-		this.prevAttachmentOffsetX = this.attachmentOffsetX;
-		this.prevAttachmentOffsetY = this.attachmentOffsetY;
-		this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
-		this.prevAttachmentNormal = this.attachmentNormal;
+			this.prevAttachmentOffsetX = this.attachmentOffsetX;
+			this.prevAttachmentOffsetY = this.attachmentOffsetY;
+			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+			this.prevAttachmentNormal = this.attachmentNormal;
 
-		float attachmentBlend = this.attachedTicks * 0.2f;
+			float attachmentBlend = this.attachedTicks * 0.2f;
 
-		// ADD MORE DEBUG HERE:
-		System.out.println("attachmentBlend: " + attachmentBlend);
+			// ADD MORE DEBUG HERE:
+			System.out.println("attachmentBlend: " + attachmentBlend);
 
-		this.attachmentOffsetX = baseStickingOffsetX + (this.lastAttachmentOffsetX - baseStickingOffsetX) * attachmentBlend;
-		this.attachmentOffsetY = baseStickingOffsetY + (this.lastAttachmentOffsetY - baseStickingOffsetY) * attachmentBlend;
-		this.attachmentOffsetZ = baseStickingOffsetZ + (this.lastAttachmentOffsetZ - baseStickingOffsetZ) * attachmentBlend;
-		this.attachmentNormal = baseOrientationNormal.add(this.lastAttachmentOrientationNormal.subtract(baseOrientationNormal).scale(attachmentBlend)).normalize();
+			this.attachmentOffsetX = baseStickingOffsetX + (this.lastAttachmentOffsetX - baseStickingOffsetX) * attachmentBlend;
+			this.attachmentOffsetY = baseStickingOffsetY + (this.lastAttachmentOffsetY - baseStickingOffsetY) * attachmentBlend;
+			this.attachmentOffsetZ = baseStickingOffsetZ + (this.lastAttachmentOffsetZ - baseStickingOffsetZ) * attachmentBlend;
+			this.attachmentNormal = baseOrientationNormal.add(this.lastAttachmentOrientationNormal.subtract(baseOrientationNormal).scale(attachmentBlend)).normalize();
 
-		// AND HERE:
-		System.out.println("Final attachmentNormal: " + this.attachmentNormal);
-		System.out.println("===================");
+			// AND HERE:
+			System.out.println("Final attachmentNormal: " + this.attachmentNormal);
+			System.out.println("===================");
 
-		if(!isAttached) {
-			this.attachedTicks = Math.max(0, this.attachedTicks - 1);
-		} else {
-			this.attachedTicks = Math.min(5, this.attachedTicks + 1);
+			if (!isAttached) {
+				this.attachedTicks = Math.max(0, this.attachedTicks - 1);
+			} else {
+				this.attachedTicks = Math.min(5, this.attachedTicks + 1);
+			}
 		}
 
 		this.orientation = this.calculateOrientation(1);
 
-// Don't apply deltas - the orientation changes are handled by syncing ATTACHMENT_NORMAL
-// The client will recalculate orientation based on the synced normal
-// Just preserve the prevOrientationYawDelta for any code that might use it
-		this.prevOrientationYawDelta = this.orientationYawDelta;
-		this.orientationYawDelta = 0;
+		// Apply rotations only on server
+		if (!this.level().isClientSide) {
+			Pair<Float, Float> newRotations = this.getOrientation().getLocalRotation(direction);
+
+			float yawDelta = newRotations.getLeft() - this.getYRot();
+			float pitchDelta = newRotations.getRight() - this.getXRot();
+
+			this.prevOrientationYawDelta = this.orientationYawDelta;
+			this.orientationYawDelta = yawDelta;
+
+			this.setYRot(Mth.wrapDegrees(this.getYRot() + yawDelta));
+			this.setXRot(Mth.wrapDegrees(this.getXRot() + pitchDelta));
+			this.yBodyRot = Mth.wrapDegrees(this.yBodyRot + yawDelta);
+			this.yHeadRot = Mth.wrapDegrees(this.yHeadRot + yawDelta);
+		}
 	}
 
 	private float wrapAngleInRange(float angle, float target) {
@@ -706,27 +720,18 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
-		if(ROTATION_BODY.equals(key)) {
-			Rotations rotation = this.entityData.get(ROTATION_BODY);
-			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
-
-			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
-
-			this.setYRot(rotations.getLeft());
-			this.setXRot(rotations.getRight());
-			this.yBodyRot = rotations.getLeft();
-		} else if(ROTATION_HEAD.equals(key)) {
-			Rotations rotation = this.entityData.get(ROTATION_HEAD);
-			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
-
-			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
-
-			this.yHeadRot = rotations.getLeft();
-			this.yHeadRotO = rotations.getLeft();
-		} else if(ATTACHMENT_NORMAL.equals(key)) {
+		if(ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
-			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
 			this.prevAttachmentNormal = this.attachmentNormal;
+			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
+		} else if(ATTACHMENT_OFFSET.equals(key)) {
+			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
+			this.prevAttachmentOffsetX = this.attachmentOffsetX;
+			this.prevAttachmentOffsetY = this.attachmentOffsetY;
+			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+			this.attachmentOffsetX = offset.x();
+			this.attachmentOffsetY = offset.y();
+			this.attachmentOffsetZ = offset.z();
 		}
 	}
 

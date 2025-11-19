@@ -32,13 +32,13 @@ public abstract class EntityClientMixin implements IEntityRotationHook {
 //        return pitch;
 //    }
 
-    @ModifyVariable(method = "lerpHeadTo", at = @At("HEAD"), ordinal = 0)
-    private float onSetHeadRotation(float yaw, float yaw2, int rotationIncrements) {
-        return this.getTargetHeadYaw(yaw, rotationIncrements);
-    }
-
-    @Override
-    public float getTargetHeadYaw(float yaw, int rotationIncrements) {
-        return yaw;
-    }
+//    @ModifyVariable(method = "lerpHeadTo", at = @At("HEAD"), ordinal = 0)
+//    private float onSetHeadRotation(float yaw, float yaw2, int rotationIncrements) {
+//        return this.getTargetHeadYaw(yaw, rotationIncrements);
+//    }
+//
+//    @Override
+//    public float getTargetHeadYaw(float yaw, int rotationIncrements) {
+//        return yaw;
+//    }
 }
