@@ -631,26 +631,11 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		this.orientation = this.calculateOrientation(1);
 
-		Pair<Float, Float> newRotations = this.getOrientation().getLocalRotation(direction);
-
-		float yawDelta = newRotations.getLeft() - this.getYRot();
-		float pitchDelta = newRotations.getRight() - this.getXRot();
-
+// Don't apply deltas - the orientation changes are handled by syncing ATTACHMENT_NORMAL
+// The client will recalculate orientation based on the synced normal
+// Just preserve the prevOrientationYawDelta for any code that might use it
 		this.prevOrientationYawDelta = this.orientationYawDelta;
-		this.orientationYawDelta = yawDelta;
-
-		// Set current rotation values for 1.21.5 interpolation system
-		this.yRotO = this.yRot;
-		this.yRot = Mth.wrapDegrees(this.yRot + yawDelta);
-
-		this.yBodyRotO = this.yBodyRot;
-		this.yBodyRot = Mth.wrapDegrees(this.yBodyRot + yawDelta);
-
-		this.yHeadRotO = this.yHeadRot;
-		this.yHeadRot = Mth.wrapDegrees(this.yHeadRot + yawDelta);
-
-		this.xRotO = this.xRot;
-		this.xRot = Mth.wrapDegrees(this.xRot + pitchDelta);
+		this.orientationYawDelta = 0;
 	}
 
 	private float wrapAngleInRange(float angle, float target) {
@@ -727,17 +712,17 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
-			// Allegedly will be handled automatically (yeah not so sure)
-			this.yRot = rotations.getLeft();
-			this.xRot = rotations.getRight();
+			this.setYRot(rotations.getLeft());
+			this.setXRot(rotations.getRight());
+			this.yBodyRot = rotations.getLeft();
 		} else if(ROTATION_HEAD.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_HEAD);
 			Vec3 look = new Vec3(rotation.x(), rotation.y(), rotation.z());
 
 			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
 
-			this.lerpYHeadRot = rotations.getLeft();
-			this.lerpHeadSteps = 3;
+			this.yHeadRot = rotations.getLeft();
+			this.yHeadRotO = rotations.getLeft();
 		} else if(ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
 			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
