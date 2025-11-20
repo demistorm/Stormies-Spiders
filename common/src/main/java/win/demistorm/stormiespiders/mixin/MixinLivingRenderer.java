@@ -28,7 +28,8 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
         if (entity instanceof IClimberEntity climber) {
-            // DON'T modify renderState.yRot/xRot - let PoseStack handle it all
+            
+            // Store climber data for pose stack transformations
             ClientEventHandlers.storeClimberData(entity, climber, partialTick);
         }
     }

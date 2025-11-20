@@ -119,8 +119,6 @@ public class ClientEventHandlers {
 		Orientation renderOrientation = data.renderOrientation;
 		float verticalOffset = data.verticalOffset;
 
-		System.out.println("Applying climber transform! Yaw: " + data.renderOrientation.yaw + " Pitch: " + data.renderOrientation.pitch);
-
 		float x = climber.getAttachmentOffset(Direction.Axis.X, data.partialTicks) - (float) renderOrientation.normal.x * verticalOffset;
 		float y = climber.getAttachmentOffset(Direction.Axis.Y, data.partialTicks) - (float) renderOrientation.normal.y * verticalOffset;
 		float z = climber.getAttachmentOffset(Direction.Axis.Z, data.partialTicks) - (float) renderOrientation.normal.z * verticalOffset;

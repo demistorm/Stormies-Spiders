@@ -598,13 +598,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 						this.lastAttachmentOrientationNormal = attachmentPoint.getRight();
 					}
 				}
-				// ADD DEBUG LOGGING HERE:
-				System.out.println("=== Spider Debug ===");
-				System.out.println("onGround: " + this.onGround());
-				System.out.println("isTravelingInFluid: " + this.isTravelingInFluid);
-				System.out.println("isAttached: " + isAttached);
-				System.out.println("attachedTicks: " + this.attachedTicks);
-				System.out.println("lastAttachmentOrientationNormal: " + this.lastAttachmentOrientationNormal);
 			}
 
 			this.prevAttachmentOffsetX = this.attachmentOffsetX;
@@ -614,17 +607,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 			float attachmentBlend = this.attachedTicks * 0.2f;
 
-			// ADD MORE DEBUG HERE:
-			System.out.println("attachmentBlend: " + attachmentBlend);
-
 			this.attachmentOffsetX = baseStickingOffsetX + (this.lastAttachmentOffsetX - baseStickingOffsetX) * attachmentBlend;
 			this.attachmentOffsetY = baseStickingOffsetY + (this.lastAttachmentOffsetY - baseStickingOffsetY) * attachmentBlend;
 			this.attachmentOffsetZ = baseStickingOffsetZ + (this.lastAttachmentOffsetZ - baseStickingOffsetZ) * attachmentBlend;
 			this.attachmentNormal = baseOrientationNormal.add(this.lastAttachmentOrientationNormal.subtract(baseOrientationNormal).scale(attachmentBlend)).normalize();
-
-			// AND HERE:
-			System.out.println("Final attachmentNormal: " + this.attachmentNormal);
-			System.out.println("===================");
 
 			if (!isAttached) {
 				this.attachedTicks = Math.max(0, this.attachedTicks - 1);
@@ -852,23 +838,23 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		boolean isFalling = this.getDeltaMovement().y <= 0.0D;
 
-		if(isFalling && this.hasEffect(MobEffects.SLOW_FALLING)) {
+		if (isFalling && this.hasEffect(MobEffects.SLOW_FALLING)) {
 			this.fallDistance = 0;
 		}
 
 		float forward = (float) relative.z;
 		float strafe = (float) relative.x;
 
-		if(forward != 0 || strafe != 0) {
+		if (forward != 0 || strafe != 0) {
 			float slipperiness = 0.91f;
 
-			if(this.onGround()) {
+			if (this.onGround()) {
 				BlockPos offsetPos = new BlockPos(this.blockPosition()).relative(groundDirection.getLeft());
 				slipperiness = this.getBlockSlipperiness(offsetPos);
 			}
 
 			float f = forward * forward + strafe * strafe;
-			if(f >= 1.0E-4F) {
+			if (f >= 1.0E-4F) {
 				f = Math.max(Mth.sqrt(f), 1.0f);
 				f = this.getRelevantMoveFactor(slipperiness) / f;
 				forward *= f;
@@ -907,7 +893,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				boolean isInnerCorner = Math.abs(collisionNormal.x) + Math.abs(collisionNormal.y) + Math.abs(collisionNormal.z) > 1.0001f;
 
 				// Only project movement vector to surface if not moving across inner corner (avoids getting stuck)
-				if(!isInnerCorner) {
+				if (!isInnerCorner) {
 					movementDir = surfaceMovementDir;
 				}
 
@@ -933,7 +919,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		float slipperiness = 0.91f;
 
-		if(this.onGround()) {
+		if (this.onGround()) {
 			this.fallDistance = 0;
 
 			BlockPos offsetPos = new BlockPos(blockPosition()).relative(groundDirection.getLeft());
@@ -950,7 +936,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		boolean detachedY = this.attachedSides.y != this.prevAttachedSides.y && Math.abs(this.attachedSides.y) < 0.001D;
 		boolean detachedZ = this.attachedSides.z != this.prevAttachedSides.z && Math.abs(this.attachedSides.z) < 0.001D;
 
-		if(detachedX || detachedY || detachedZ) {
+		if (detachedX || detachedY || detachedZ) {
 			float stepHeight = this.maxUpStep();
 			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
@@ -965,9 +951,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Vec3 attachVector = upVector.scale(-1);
 			attachVector = attachVector.subtract(axis.scale(axis.dot(attachVector)));
 
-			if(Math.abs(attachVector.x) > Math.abs(attachVector.y) && Math.abs(attachVector.x) > Math.abs(attachVector.z)) {
+			if (Math.abs(attachVector.x) > Math.abs(attachVector.y) && Math.abs(attachVector.x) > Math.abs(attachVector.z)) {
 				attachVector = new Vec3(Math.signum(attachVector.x), 0, 0);
-			} else if(Math.abs(attachVector.y) > Math.abs(attachVector.z)) {
+			} else if (Math.abs(attachVector.y) > Math.abs(attachVector.z)) {
 				attachVector = new Vec3(0, Math.signum(attachVector.y), 0);
 			} else {
 				attachVector = new Vec3(0, 0, Math.signum(attachVector.z));
@@ -979,14 +965,14 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			motion = this.getDeltaMovement();
 
 			// Move AABB towards new surface until it touches
-			for(int i = 0; i < 2 && !this.onGround(); i++) {
+			for (int i = 0; i < 2 && !this.onGround(); i++) {
 				this.move(MoverType.SELF, attachVector.scale(attachDst));
 			}
 
 			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
 			// Attaching failed, fall back to previous position
-			if(!this.onGround()) {
+			if (!this.onGround()) {
 				this.setBoundingBox(aabb);
 				this.setLocationFromBoundingbox();
 				this.setDeltaMovement(motion);
@@ -998,7 +984,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			}
 		}
 
-		this.calculateEntityAnimation( true);
+		// Normal ground animation
+		this.calculateEntityAnimation(true);
 	}
 
 	@Override
