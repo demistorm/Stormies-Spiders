@@ -12,7 +12,8 @@
   ],
   "client": [
     "EntityClientMixin",
-    "MixinLivingRenderer"
+    "MixinLivingRenderer",
+    "ClientSpiderAnimationMixin"
   ],
   "server": [],
   "injectors": {
