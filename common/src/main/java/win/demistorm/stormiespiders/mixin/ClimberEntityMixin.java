@@ -813,20 +813,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				this.calculateEntityAnimation( true);
 			}
 
-			// SERVER-SIDE: Sync animation data for climbing to client
-			if(!this.level().isClientSide && Math.abs(this.attachmentNormal.y) < 0.9) {
-				Vec3 motion = this.getDeltaMovement();
-				float movementSpeed = (float) Math.sqrt(motion.x * motion.x + motion.y * motion.y + motion.z * motion.z);
-				float animSpeed = Math.min(movementSpeed * 5.0f, 1.0f);
-
-				// Use ROTATION_HEAD as a carrier for animation speed (we already sync this data)
-				if(animSpeed > 0.01f) {
-					this.entityData.set(ROTATION_HEAD, new Rotations((float) this.getYRot(), (float) this.getXRot(), animSpeed));
-				}
-
-				System.out.println("[SERVER] Syncing animation data - attachmentNormal.y = " + this.attachmentNormal.y + ", animSpeed = " + animSpeed);
-			}
-
+			
 			this.updateOffsetsAndOrientation();
 			return true;
 		} else {
