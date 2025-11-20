@@ -42,9 +42,6 @@ public class ClientSpiderAnimationMixin {
             float multiplier = isClimbing ? 8.0f : 3.0f; // Ground gets slower speed, climbing gets enhanced speed
             float animSpeed = Math.min(movementSpeed * multiplier, 1.0f);
             entity.walkAnimation.update(animSpeed, 0.4f, 1.0f);
-            System.out.println("[CLIENT] Animation - movementSpeed = " + movementSpeed + ", animSpeed = " + animSpeed +
-                ", hasAirUnderneath = " + hasAirUnderneath + ", isClimbing = " + isClimbing +
-                ", underBlock = " + entity.level().getBlockState(underPos).getBlock().getName().getString());
         }
     }
 }
