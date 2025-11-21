@@ -52,7 +52,7 @@ public class ClientEventHandlers {
 				climber.getOrientation()
 		));
 
-		// Track which entity we're about to render
+		// Track which entity is about to render
 		currentRenderingEntityId = entityId;
 	}
 
@@ -128,11 +128,5 @@ public class ClientEventHandlers {
 
 			matrixStack.translate(-x, -y, -z);
 		}
-	}
-
-	// Call this at start of each frame to clean up any stale entries
-	public static void onFrameStart() {
-		// Optional: clear cache at frame start if you want fresh data each frame
-		// climberDataCache.clear();
 	}
 }

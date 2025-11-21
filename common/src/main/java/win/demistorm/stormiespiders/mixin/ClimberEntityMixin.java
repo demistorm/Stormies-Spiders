@@ -580,8 +580,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		};
 
 		Iterable<VoxelShape> shapes =  cachedCollisionReader.getBlockCollisions(this,aabb);
-//		StreamSupport.stream(new CollisionSpliterator(cachedCollisionReader, this, aabb, this::canClimbOnBlock), false);
-
 		shapes.forEach(shape -> shape.forAllBoxes(action));
 	}
 
@@ -627,7 +625,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		Vec3 baseOrientationNormal = new Vec3(0, 1, 0);
 
 
-		// ONLY calculate attachments on server
+		// Calculate attachments on server
 		if (!this.level().isClientSide) {
 			// Prevent climbing attachment during rain when config is enabled
 			if (Config.COMMON.preventClimbingInRain() && this.level().isRaining() &&
@@ -788,7 +786,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Vec3 newNormal = new Vec3(normal.x(), normal.y(), normal.z());
 
 			if (this.level().isClientSide) {
-				// Client: set as target, we'll smoothly chase it
+				// Client: set target, smoothly chase it
 				this.targetAttachmentNormal = newNormal;
 			} else {
 				// Server: direct assignment
@@ -799,7 +797,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
 
 			if (this.level().isClientSide) {
-				// Client: set as target
+				// Client: set target
 				this.targetAttachmentOffsetX = offset.x();
 				this.targetAttachmentOffsetY = offset.y();
 				this.targetAttachmentOffsetZ = offset.z();
@@ -870,7 +868,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			}
 
 			this.hasImpulse = true;
-//			net.minecraftforge.common.ForgeHooks.onLivingJump(this);
 
 			return true;
 		}
@@ -964,7 +961,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				Vec3 motion = this.getDeltaMovement();
 				AABB aabb = this.getBoundingBox();
 
-				// Check actual movement vector
+				// Check movement vector
 				this.move(MoverType.SELF, movementOffset);
 
 				Vec3 movementDir = new Vec3(this.getX() - px, this.getY() - py, this.getZ() - pz).normalize();
@@ -1034,7 +1031,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		if (detachedX || detachedY || detachedZ) {
 			float stepHeight = this.maxUpStep();
-			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
 			boolean prevOnGround = this.onGround();
 			boolean prevCollidedHorizontally = this.horizontalCollision;
@@ -1064,8 +1060,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			for (int i = 0; i < 2 && !this.onGround(); i++) {
 				this.move(MoverType.SELF, attachVector.scale(attachDst));
 			}
-
-			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 
 			// Attaching failed, fall back to previous position
 			if (!this.onGround()) {
@@ -1135,8 +1129,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			double dz = moved.z;
 
 			Vec3 tangentialMovement = moved.subtract(this.attachmentNormal.scale(this.attachmentNormal.dot(moved)));
-
-			// walkDist field removed in 1.21.4 - step distance handling moved to Entity class
 
 			this.moveDist = (float) ((double) this.moveDist + Math.sqrt(dx * dx + dy * dy + dz * dz) * 0.6D);
 

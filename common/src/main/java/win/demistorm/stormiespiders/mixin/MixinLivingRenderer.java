@@ -1,11 +1,8 @@
 package win.demistorm.stormiespiders.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.world.phys.Vec3;
-import org.apache.commons.lang3.tuple.Pair;
 import win.demistorm.stormiespiders.client.ClientEventHandlers;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
-import win.demistorm.stormiespiders.common.entity.mob.Orientation;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.EntityRenderer;

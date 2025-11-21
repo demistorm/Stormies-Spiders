@@ -18,16 +18,16 @@ public class ClientSpiderAnimationMixin {
         // Cast to LivingEntity to access walkAnimation
         LivingEntity entity = (LivingEntity)(Object)this;
 
-        // Only run additional logic on client side
+        // Client side only
         if(!entity.level().isClientSide) {
             return;
         }
 
-        // World-space climbing detection: check for air underneath spider
+        // Detect climbing by checking for air below spider
         Vec3 motion = entity.getDeltaMovement();
         float movementSpeed = (float) Math.sqrt(motion.x * motion.x + motion.y * motion.y + motion.z * motion.z);
 
-        // Check if there's air 0.2 blocks directly underneath the spider (world space)
+        // Look for air 0.2 blocks below spider
         net.minecraft.core.BlockPos underPos = net.minecraft.core.BlockPos.containing(
             entity.getX(),
             entity.getY() - 0.2,
@@ -38,8 +38,8 @@ public class ClientSpiderAnimationMixin {
         boolean isClimbing = hasAirUnderneath && movementSpeed > 0.01f;
 
         if(movementSpeed > 0.01f) {
-            // Use higher animation speed for climbing (air underneath), normal for ground (solid underneath)
-            float multiplier = isClimbing ? 8.0f : 3.0f; // Ground gets slower speed, climbing gets enhanced speed
+            // Speed up animation when climbing, slow down when on ground
+            float multiplier = isClimbing ? 8.0f : 3.0f; // First float is climbing speed, second is ground speed
             float animSpeed = Math.min(movementSpeed * multiplier, 1.0f);
             entity.walkAnimation.update(animSpeed, 0.4f, 1.0f);
         }
