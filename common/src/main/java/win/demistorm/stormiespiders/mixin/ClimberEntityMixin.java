@@ -1,5 +1,7 @@
 package win.demistorm.stormiespiders.mixin;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
 import win.demistorm.stormiespiders.common.Matrix4f;
@@ -189,23 +191,23 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	}
 
 	@Override
-	public void onWrite(CompoundTag nbt) {
-		nbt.putDouble("stormiespiders.AttachmentNormalX", this.attachmentNormal.x);
-		nbt.putDouble("stormiespiders.AttachmentNormalY", this.attachmentNormal.y);
-		nbt.putDouble("stormiespiders.AttachmentNormalZ", this.attachmentNormal.z);
+	public void onWrite(ValueOutput output) {
+		output.putDouble("stormiespiders.AttachmentNormalX", this.attachmentNormal.x);
+		output.putDouble("stormiespiders.AttachmentNormalY", this.attachmentNormal.y);
+		output.putDouble("stormiespiders.AttachmentNormalZ", this.attachmentNormal.z);
 
-		nbt.putInt("stormiespiders.AttachedTicks", this.attachedTicks);
+		output.putInt("stormiespiders.AttachedTicks", this.attachedTicks);
 	}
 
 	@Override
-	public void onRead(CompoundTag nbt) {
+	public void onRead(ValueInput input) {
 		this.prevAttachmentNormal = this.attachmentNormal = new Vec3(
-				nbt.contains("stormiespiders.AttachmentNormalX") ? nbt.getDouble("stormiespiders.AttachmentNormalX").get() : 0.0,
-				nbt.contains("stormiespiders.AttachmentNormalY") ? nbt.getDouble("stormiespiders.AttachmentNormalY").get() : 1.0,
-				nbt.contains("stormiespiders.AttachmentNormalZ") ? nbt.getDouble("stormiespiders.AttachmentNormalZ").get() : 0.0
-				);
+				input.getDoubleOr("stormiespiders.AttachmentNormalX", 0.0),
+				input.getDoubleOr("stormiespiders.AttachmentNormalY", 1.0),
+				input.getDoubleOr("stormiespiders.AttachmentNormalZ", 0.0)
+		);
 
-		this.attachedTicks = nbt.contains("stormiespiders.AttachedTicks") ? nbt.getInt("stormiespiders.AttachedTicks").get() : 5;
+		this.attachedTicks = input.getIntOr("stormiespiders.AttachedTicks", 5);
 
 		this.orientation = this.calculateOrientation(1);
 

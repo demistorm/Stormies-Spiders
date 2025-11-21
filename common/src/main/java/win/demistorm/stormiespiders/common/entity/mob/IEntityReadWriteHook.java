@@ -1,9 +1,10 @@
 package win.demistorm.stormiespiders.common.entity.mob;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public interface IEntityReadWriteHook {
-	public void onRead(CompoundTag nbt);
-	
-	public void onWrite(CompoundTag nbt);
+	public void onRead(ValueInput input);
+
+	public void onWrite(ValueOutput output);
 }

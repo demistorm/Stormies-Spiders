@@ -2,6 +2,8 @@ package win.demistorm.stormiespiders.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import win.demistorm.stormiespiders.common.CommonEventHandlers;
 import win.demistorm.stormiespiders.common.entity.mob.IEntityMovementHook;
 import win.demistorm.stormiespiders.common.entity.mob.IEntityReadWriteHook;
@@ -81,43 +83,26 @@ public abstract class EntityMixin implements IEntityMovementHook, IEntityReadWri
 
 	@Inject(method = "load", at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/entity/Entity;readAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V",
+			target = "Lnet/minecraft/world/entity/Entity;readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V",
 			shift = At.Shift.AFTER
-			))
-	private void onRead(CompoundTag nbt, CallbackInfo ci) {
-		this.onRead(nbt);
+	))
+	private void onRead(ValueInput input, CallbackInfo ci) {
+		this.onRead(input);
 	}
 
 	@Override
-	public void onRead(CompoundTag nbt) { }
+	public void onRead(ValueInput input) { }
 
 	@Inject(method = "saveWithoutId", at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/world/entity/Entity;addAdditionalSaveData(Lnet/minecraft/nbt/CompoundTag;)V",
+			target = "Lnet/minecraft/world/entity/Entity;addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V",
 			shift = At.Shift.AFTER
-			))
-	private void onWrite(CompoundTag nbt, CallbackInfoReturnable<CompoundTag> ci) {
-		this.onWrite(nbt);
+	))
+	private void onWrite(ValueOutput output, CallbackInfo ci) {
+		this.onWrite(output);
 	}
 
 	@Override
-	public void onWrite(CompoundTag nbt) { }
-
-	// defineSynchedData signature changed to 1.21.4 (now uses a Builder parameter)
-	// @Shadow(prefix = "shadow$")
-	// private void shadow$defineSynchedData() { }
-
-
-//	@Redirect(method = "<init>*", at = @At(
-//			value = "INVOKE",
-//			target = "Lnet/minecraft/world/entity/Entity;defineSynchedData()V"
-//			))
-//	private void onRegisterData(Entity _this) {
-//		this.shadow$defineSynchedData();
-//
-//		if(_this == (Object) this) {
-//			this.onRegisterData();
-//		}
-//	}
+	public void onWrite(ValueOutput output) { }
 
 }
