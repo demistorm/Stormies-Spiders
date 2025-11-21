@@ -5,7 +5,6 @@ import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.network.protocol.game.DebugPackets;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -77,8 +76,6 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                     this.path.advance();
                 }
             }
-
-            DebugPackets.sendPathFindingPacket(this.level, this.mob, this.path, this.maxDistanceToWaypoint);
 
             if (!this.isDone()) {
                 Node targetPoint = this.path.getNode(this.path.getNextNodeIndex());
