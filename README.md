@@ -21,7 +21,7 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 | Config Screen   | ✔️     |
 | Simplify config | ✔️     |
 | 1.21.4          | ✔️     |
-| 1.21.5          | Todo   |
+| 1.21.5          | ✔️     |
 | 1.21.8          | Todo   |
 | 1.21.10         | Todo   |
 | 1.21.11         | Todo   |
