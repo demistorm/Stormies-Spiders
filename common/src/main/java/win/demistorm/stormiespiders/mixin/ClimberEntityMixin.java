@@ -97,6 +97,16 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	private Vec3 attachmentNormal = new Vec3(0, 1, 0);
 	private Vec3 prevAttachmentNormal = new Vec3(0, 1, 0);
 
+	// Client-side smoothing targets (what server sent us)
+	private Vec3 targetAttachmentNormal = new Vec3(0, 1, 0);
+	private double targetAttachmentOffsetX, targetAttachmentOffsetY, targetAttachmentOffsetZ;
+
+	// Client-side smoothed values (what we actually render)
+	private Vec3 smoothedAttachmentNormal = new Vec3(0, 1, 0);
+	private Vec3 prevSmoothedAttachmentNormal = new Vec3(0, 1, 0);
+	private double smoothedOffsetX, smoothedOffsetY, smoothedOffsetZ;
+	private double prevSmoothedOffsetX, prevSmoothedOffsetY, prevSmoothedOffsetZ;
+
 	private float prevOrientationYawDelta;
 	private float orientationYawDelta;
 
@@ -144,6 +154,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.moveControl = new ClimberMoveController<>(this);
 		this.lookControl = new ClimberLookController<>(this);
 		this.jumpControl = new ClimberJumpController<>(this);
+		// Initialize client smoothing values
+		this.targetAttachmentNormal = new Vec3(0, 1, 0);
+		this.smoothedAttachmentNormal = new Vec3(0, 1, 0);
+		this.prevSmoothedAttachmentNormal = new Vec3(0, 1, 0);
+		this.targetAttachmentOffsetY = 0.075;
+		this.smoothedOffsetY = 0.075;
+		this.prevSmoothedOffsetY = 0.075;
 	}
 
 	@Inject(method = "createNavigation", at = @At("HEAD"), cancellable = true)
@@ -191,6 +208,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.attachedTicks = nbt.contains("stormiespiders.AttachedTicks") ? nbt.getInt("stormiespiders.AttachedTicks").get() : 5;
 
 		this.orientation = this.calculateOrientation(1);
+
+		// Sync smoothed values on load
+		if (this.level().isClientSide) {
+			this.targetAttachmentNormal = this.attachmentNormal;
+			this.smoothedAttachmentNormal = this.attachmentNormal;
+			this.prevSmoothedAttachmentNormal = this.attachmentNormal;
+		}
 	}
 
 	@Override
@@ -402,14 +426,28 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getAttachmentOffset(Direction.Axis axis, float partialTicks) {
-		switch(axis) {
-			default:
-			case X:
-				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetX, this.attachmentOffsetX);
-			case Y:
-				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetY, this.attachmentOffsetY);
-			case Z:
-				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetZ, this.attachmentOffsetZ);
+		if (this.level().isClientSide) {
+			// Client: interpolate between previous and current smoothed values
+			switch (axis) {
+				default:
+				case X:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetX, this.smoothedOffsetX);
+				case Y:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetY, this.smoothedOffsetY);
+				case Z:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetZ, this.smoothedOffsetZ);
+			}
+		} else {
+			// Server: use raw values
+			switch (axis) {
+				default:
+				case X:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetX, this.attachmentOffsetX);
+				case Y:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetY, this.attachmentOffsetY);
+				case Z:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetZ, this.attachmentOffsetZ);
+			}
 		}
 	}
 
@@ -444,12 +482,26 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onLivingTick() {
-		// Update previous values on client for smooth interpolation
+		// Client-side smoothing for interpolation
 		if (this.level().isClientSide) {
-			this.prevAttachmentOffsetX = this.attachmentOffsetX;
-			this.prevAttachmentOffsetY = this.attachmentOffsetY;
-			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
-			this.prevAttachmentNormal = this.attachmentNormal;
+			// Store previous smoothed values for sub-tick interpolation
+			this.prevSmoothedOffsetX = this.smoothedOffsetX;
+			this.prevSmoothedOffsetY = this.smoothedOffsetY;
+			this.prevSmoothedOffsetZ = this.smoothedOffsetZ;
+			this.prevSmoothedAttachmentNormal = this.smoothedAttachmentNormal;
+
+			// Chase the target values
+			float smoothFactor = 0.5f;
+
+			this.smoothedOffsetX = Mth.lerp(smoothFactor, this.smoothedOffsetX, this.targetAttachmentOffsetX);
+			this.smoothedOffsetY = Mth.lerp(smoothFactor, this.smoothedOffsetY, this.targetAttachmentOffsetY);
+			this.smoothedOffsetZ = Mth.lerp(smoothFactor, this.smoothedOffsetZ, this.targetAttachmentOffsetZ);
+
+			this.smoothedAttachmentNormal = new Vec3(
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.x, this.targetAttachmentNormal.x),
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.y, this.targetAttachmentNormal.y),
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.z, this.targetAttachmentNormal.z)
+			).normalize();
 		}
 
 		this.updateWalkingSide();
@@ -662,12 +714,23 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public Orientation calculateOrientation(float partialTicks) {
-		// Properly interpolate between previous and current attachment normal
-		Vec3 attachmentNormal = new Vec3(
-				Mth.lerp(partialTicks, this.prevAttachmentNormal.x, this.attachmentNormal.x),
-				Mth.lerp(partialTicks, this.prevAttachmentNormal.y, this.attachmentNormal.y),
-				Mth.lerp(partialTicks, this.prevAttachmentNormal.z, this.attachmentNormal.z)
-		).normalize();
+		Vec3 attachmentNormal;
+
+		if (this.level().isClientSide) {
+			// Client: use smoothed and interpolated normal
+			attachmentNormal = new Vec3(
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.x, this.smoothedAttachmentNormal.x),
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.y, this.smoothedAttachmentNormal.y),
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.z, this.smoothedAttachmentNormal.z)
+			).normalize();
+		} else {
+			// Server: use raw interpolated values
+			attachmentNormal = new Vec3(
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.x, this.attachmentNormal.x),
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.y, this.attachmentNormal.y),
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.z, this.attachmentNormal.z)
+			).normalize();
+		}
 
 		Vec3 localZ = new Vec3(0, 0, 1);
 		Vec3 localY = new Vec3(0, 1, 0);
@@ -720,23 +783,35 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
-		if(ATTACHMENT_NORMAL.equals(key)) {
+		if (ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
-			// On client, keep prev as old current for interpolation
-			// The prev should only update at tick boundaries, not on data sync
+			Vec3 newNormal = new Vec3(normal.x(), normal.y(), normal.z());
+
 			if (this.level().isClientSide) {
-				// Store as "target" - the current becomes the new target
-				// prev stays as-is until next tick
+				// Client: set as target, we'll smoothly chase it
+				this.targetAttachmentNormal = newNormal;
+			} else {
+				// Server: direct assignment
+				this.prevAttachmentNormal = this.attachmentNormal;
+				this.attachmentNormal = newNormal;
 			}
-			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
-		} else if(ATTACHMENT_OFFSET.equals(key)) {
+		} else if (ATTACHMENT_OFFSET.equals(key)) {
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
+
 			if (this.level().isClientSide) {
-				// Same approach - don't touch prev on client
+				// Client: set as target
+				this.targetAttachmentOffsetX = offset.x();
+				this.targetAttachmentOffsetY = offset.y();
+				this.targetAttachmentOffsetZ = offset.z();
+			} else {
+				// Server: direct assignment
+				this.prevAttachmentOffsetX = this.attachmentOffsetX;
+				this.prevAttachmentOffsetY = this.attachmentOffsetY;
+				this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+				this.attachmentOffsetX = offset.x();
+				this.attachmentOffsetY = offset.y();
+				this.attachmentOffsetZ = offset.z();
 			}
-			this.attachmentOffsetX = offset.x();
-			this.attachmentOffsetY = offset.y();
-			this.attachmentOffsetZ = offset.z();
 		}
 	}
 
