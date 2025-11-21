@@ -400,14 +400,15 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getAttachmentOffset(Direction.Axis axis, float partialTicks) {
+		// Let Minecraft handle interpolation - use current values directly
 		switch(axis) {
 		default:
 		case X:
-			return (float) (this.prevAttachmentOffsetX + (this.attachmentOffsetX - this.prevAttachmentOffsetX) * partialTicks);
+			return (float) this.attachmentOffsetX;
 		case Y:
-			return (float) (this.prevAttachmentOffsetY + (this.attachmentOffsetY - this.prevAttachmentOffsetY) * partialTicks);
+			return (float) this.attachmentOffsetY;
 		case Z:
-			return (float) (this.prevAttachmentOffsetZ + (this.attachmentOffsetZ - this.prevAttachmentOffsetZ) * partialTicks);
+			return (float) this.attachmentOffsetZ;
 		}
 	}
 
@@ -652,7 +653,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public Orientation calculateOrientation(float partialTicks) {
-		Vec3 attachmentNormal = this.prevAttachmentNormal.add(this.attachmentNormal.subtract(this.prevAttachmentNormal).scale(partialTicks));
+		// Let Minecraft handle interpolation - use current values directly
+		Vec3 attachmentNormal = this.attachmentNormal;
 
 		Vec3 localZ = new Vec3(0, 0, 1);
 		Vec3 localY = new Vec3(0, 1, 0);
@@ -708,10 +710,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
 		if(ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
+			// Update previous for Minecraft's interpolation to work properly
 			this.prevAttachmentNormal = this.attachmentNormal;
 			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
 		} else if(ATTACHMENT_OFFSET.equals(key)) {
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
+			// Update previous values for Minecraft's interpolation to work properly
 			this.prevAttachmentOffsetX = this.attachmentOffsetX;
 			this.prevAttachmentOffsetY = this.attachmentOffsetY;
 			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
