@@ -130,6 +130,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	private boolean isJumping = false;
 
+	private boolean clientTickedThisFrame = false;
+
 	private ClimberEntityMixin(EntityType<? extends PathfinderMob> type, Level worldIn) {
 		super(type, worldIn);
 	}
@@ -400,15 +402,14 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getAttachmentOffset(Direction.Axis axis, float partialTicks) {
-		// Let Minecraft handle interpolation - use current values directly
 		switch(axis) {
-		default:
-		case X:
-			return (float) this.attachmentOffsetX;
-		case Y:
-			return (float) this.attachmentOffsetY;
-		case Z:
-			return (float) this.attachmentOffsetZ;
+			default:
+			case X:
+				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetX, this.attachmentOffsetX);
+			case Y:
+				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetY, this.attachmentOffsetY);
+			case Z:
+				return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetZ, this.attachmentOffsetZ);
 		}
 	}
 
@@ -443,6 +444,14 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onLivingTick() {
+		// Update previous values on client for smooth interpolation
+		if (this.level().isClientSide) {
+			this.prevAttachmentOffsetX = this.attachmentOffsetX;
+			this.prevAttachmentOffsetY = this.attachmentOffsetY;
+			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+			this.prevAttachmentNormal = this.attachmentNormal;
+		}
+
 		this.updateWalkingSide();
 	}
 
@@ -653,8 +662,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public Orientation calculateOrientation(float partialTicks) {
-		// Let Minecraft handle interpolation - use current values directly
-		Vec3 attachmentNormal = this.attachmentNormal;
+		// Properly interpolate between previous and current attachment normal
+		Vec3 attachmentNormal = new Vec3(
+				Mth.lerp(partialTicks, this.prevAttachmentNormal.x, this.attachmentNormal.x),
+				Mth.lerp(partialTicks, this.prevAttachmentNormal.y, this.attachmentNormal.y),
+				Mth.lerp(partialTicks, this.prevAttachmentNormal.z, this.attachmentNormal.z)
+		).normalize();
 
 		Vec3 localZ = new Vec3(0, 0, 1);
 		Vec3 localY = new Vec3(0, 1, 0);
@@ -677,7 +690,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		float pitch = (float) Math.toDegrees(Mth.atan2(Mth.sqrt(componentX * componentX + componentZ * componentZ), componentY));
 
 		Matrix4f m = new Matrix4f();
-
 		m.multiply(new Matrix4f((float) Math.toRadians(yaw), 0, 1, 0));
 		m.multiply(new Matrix4f((float) Math.toRadians(pitch), 1, 0, 0));
 		m.multiply(new Matrix4f((float) Math.toRadians((float) Math.signum(0.5f - componentY - componentZ - componentX) * yaw), 0, 1, 0));
@@ -710,15 +722,18 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
 		if(ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
-			// Update previous for Minecraft's interpolation to work properly
-			this.prevAttachmentNormal = this.attachmentNormal;
+			// On client, keep prev as old current for interpolation
+			// The prev should only update at tick boundaries, not on data sync
+			if (this.level().isClientSide) {
+				// Store as "target" - the current becomes the new target
+				// prev stays as-is until next tick
+			}
 			this.attachmentNormal = new Vec3(normal.x(), normal.y(), normal.z());
 		} else if(ATTACHMENT_OFFSET.equals(key)) {
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
-			// Update previous values for Minecraft's interpolation to work properly
-			this.prevAttachmentOffsetX = this.attachmentOffsetX;
-			this.prevAttachmentOffsetY = this.attachmentOffsetY;
-			this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+			if (this.level().isClientSide) {
+				// Same approach - don't touch prev on client
+			}
 			this.attachmentOffsetX = offset.x();
 			this.attachmentOffsetY = offset.y();
 			this.attachmentOffsetZ = offset.z();
