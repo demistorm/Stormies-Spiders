@@ -13,7 +13,7 @@ public class StormiesSpiders {
         commonInit.init();
 
         // Set up client side
-        if (FMLEnvironment.dist.isClient()) {
+        if (FMLEnvironment.getDist().isClient()) {
             NeoForgeClientSetup.doClientSetup();
             // Register config screen
             NeoForgeConfigScreen.register();
