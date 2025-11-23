@@ -19,7 +19,7 @@ public class ClientSpiderAnimationMixin {
         LivingEntity entity = (LivingEntity)(Object)this;
 
         // Client side only
-        if(!entity.level().isClientSide) {
+        if(!entity.level().isClientSide()) {
             return;
         }
 

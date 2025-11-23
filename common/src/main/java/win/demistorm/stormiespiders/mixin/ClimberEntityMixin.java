@@ -212,7 +212,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.orientation = this.calculateOrientation(1);
 
 		// Sync smoothed values on load
-		if (this.level().isClientSide) {
+		if (this.level().isClientSide()) {
 			this.targetAttachmentNormal = this.attachmentNormal;
 			this.smoothedAttachmentNormal = this.attachmentNormal;
 			this.prevSmoothedAttachmentNormal = this.attachmentNormal;
@@ -428,7 +428,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getAttachmentOffset(Direction.Axis axis, float partialTicks) {
-		if (this.level().isClientSide) {
+		if (this.level().isClientSide()) {
 			// Client: interpolate between previous and current smoothed values
 			switch (axis) {
 				default:
@@ -462,7 +462,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onTick() {
-		if(!this.level().isClientSide && this.level() instanceof ServerLevel) {
+		if(!this.level().isClientSide() && this.level() instanceof ServerLevel) {
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
 			if(entityTracker != null) {
@@ -485,7 +485,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	@Override
 	public void onLivingTick() {
 		// Client-side smoothing for interpolation
-		if (this.level().isClientSide) {
+		if (this.level().isClientSide()) {
 			// Store previous smoothed values for sub-tick interpolation
 			this.prevSmoothedOffsetX = this.smoothedOffsetX;
 			this.prevSmoothedOffsetY = this.smoothedOffsetY;
@@ -628,7 +628,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 
 		// Calculate attachments on server
-		if (!this.level().isClientSide) {
+		if (!this.level().isClientSide()) {
 			// Prevent climbing attachment during rain when config is enabled
 			if (Config.COMMON.preventClimbingInRain() && this.level().isRaining() &&
 					this.level().isRainingAt(new BlockPos((int) this.getX(), (int) (this.getY() + this.getBbHeight() * 0.5f), (int) this.getZ()))) {
@@ -684,7 +684,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.orientation = this.calculateOrientation(1);
 
 		// Apply rotations only on server
-		if (!this.level().isClientSide) {
+		if (!this.level().isClientSide()) {
 			Pair<Float, Float> newRotations = this.getOrientation().getLocalRotation(direction);
 
 			float yawDelta = newRotations.getLeft() - this.getYRot();
@@ -716,7 +716,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	public Orientation calculateOrientation(float partialTicks) {
 		Vec3 attachmentNormal;
 
-		if (this.level().isClientSide) {
+		if (this.level().isClientSide()) {
 			// Client: use smoothed and interpolated normal
 			attachmentNormal = new Vec3(
 					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.x, this.smoothedAttachmentNormal.x),
@@ -787,7 +787,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
 			Vec3 newNormal = new Vec3(normal.x(), normal.y(), normal.z());
 
-			if (this.level().isClientSide) {
+			if (this.level().isClientSide()) {
 				// Client: set target, smoothly chase it
 				this.targetAttachmentNormal = newNormal;
 			} else {
@@ -798,7 +798,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		} else if (ATTACHMENT_OFFSET.equals(key)) {
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
 
-			if (this.level().isClientSide) {
+			if (this.level().isClientSide()) {
 				// Client: set target
 				this.targetAttachmentOffsetX = offset.x();
 				this.targetAttachmentOffsetY = offset.y();

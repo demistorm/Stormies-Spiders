@@ -4,7 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
@@ -66,7 +66,7 @@ public class ClientEventHandlers {
 
 	public static void onPostRenderLivingFromState(LivingEntityRenderState renderState,
 												   PoseStack matrixStack,
-												   MultiBufferSource bufferIn) {
+												   SubmitNodeCollector nodeCollector) {
 		ClimberRenderData data = climberDataCache.get(currentRenderingEntityId);
 		if (data != null) {
 			applyClimberTransformPost(data, matrixStack);
