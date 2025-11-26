@@ -8,7 +8,7 @@
         "${mod_author}"
     ],
     "contact": {
-        "homepage": "https://fabricmc.net/",
+        "homepage": "https://modrinth.com/mod/stormies-spiders",
         "sources": "https://github.com/demistorm/stormies-spiders",
         "issues": "https://github.com/demistorm/stormies-spiders/issues"
     },
