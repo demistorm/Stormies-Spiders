@@ -22,5 +22,12 @@ build
 eclipse
 run
 runs
+GITHUB_SETUP.md
 CLAUDE.md
 .claude
+devTest
+
+# API keys and secrets
+api_keys.txt
+*.tokens
+secrets/
