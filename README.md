@@ -24,7 +24,7 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 | 1.21.5          | ✔️     |
 | 1.21.8          | ✔️     |
 | 1.21.10         | ✔️     |
-| Prepare for Publish         | Todo   |
+| Prepare for Publish         | ✔️   |
 | Publish         | Todo   |
 | 1.21.11         | Todo   |
 
