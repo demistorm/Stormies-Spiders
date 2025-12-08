@@ -6,5 +6,9 @@ public class Config {
         public static boolean preventClimbingInRain() {
             return ModConfig.Data.preventClimbingInRain();
         }
+
+        public static boolean disableDataSync() {
+            return ModConfig.Data.disableDataSync();
+        }
     }
 }

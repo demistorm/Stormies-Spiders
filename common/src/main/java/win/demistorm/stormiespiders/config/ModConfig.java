@@ -14,6 +14,7 @@ public final class ModConfig {
     private static final Path CONFIG_FILE = Paths.get("config", "stormiespiders.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static boolean preventClimbingInRain = false;
+    private static boolean disableDataSync = false;
 
     // Data structure matching the JSON format
     public static final class ConfigData {
@@ -21,6 +22,7 @@ public final class ModConfig {
 
         public static final class GeneralSection {
             public boolean prevent_climbing_in_rain = false;
+            public boolean disable_data_sync = false;
         }
     }
 
@@ -32,6 +34,10 @@ public final class ModConfig {
         public static void setPreventClimbingInRain(boolean value) {
             preventClimbingInRain = value;
             save();
+        }
+
+        public static boolean disableDataSync() {
+            return disableDataSync;
         }
     }
 
@@ -60,12 +66,14 @@ public final class ModConfig {
             ConfigData data = GSON.fromJson(content, ConfigData.class);
             if (data != null && data.general != null) {
                 preventClimbingInRain = data.general.prevent_climbing_in_rain;
+                disableDataSync = data.general.disable_data_sync;
             }
 
         } catch (IOException e) {
             Constants.LOG.error("Failed to load config, using defaults", e);
             // Use default values
             preventClimbingInRain = false;
+            disableDataSync = false;
         }
     }
 
@@ -79,6 +87,7 @@ public final class ModConfig {
             // Create JSON content
             ConfigData data = new ConfigData();
             data.general.prevent_climbing_in_rain = preventClimbingInRain;
+            data.general.disable_data_sync = disableDataSync;
 
             Files.writeString(CONFIG_FILE, GSON.toJson(data));
 
