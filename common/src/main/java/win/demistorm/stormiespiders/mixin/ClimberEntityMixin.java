@@ -463,8 +463,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		if(!this.level().isClientSide && this.level() instanceof ServerLevel) {
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
-			if(entityTracker != null) {
-				// Sync attachment data
+			if(entityTracker != null && !Config.COMMON.disableDataSync()) {
+				// Sync attachment data only if data sync is enabled
 				this.entityData.set(ATTACHMENT_NORMAL, new Rotations(
 						(float) this.attachmentNormal.x,
 						(float) this.attachmentNormal.y,
