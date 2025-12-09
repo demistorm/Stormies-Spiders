@@ -151,7 +151,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         Orientation orientation = this.climber.getOrientation();
         Vec3 upVector = orientation.getGlobal(this.mob.yRot, -90);
 
-        this.verticalFacing = Direction.getNearest(Mth.floor(upVector.x), Mth.floor(upVector.y), Mth.floor(upVector.z), Direction.UP);
+        this.verticalFacing = Direction.getNearest(Mth.floor(upVector.x), Mth.floor(upVector.y), Mth.floor(upVector.z));
 
         //Look up to 4 nodes ahead so it doesn't backtrack on positions with multiple path sides when changing/updating path
         for (int i = 4; i >= 0; i--) {

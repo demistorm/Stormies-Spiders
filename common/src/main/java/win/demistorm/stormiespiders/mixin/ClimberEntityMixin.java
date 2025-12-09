@@ -472,8 +472,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				return level().getHeight();
 			}
 
-			public int getMinY() {
-				return level().getMinY();
+			@Override
+			public int getMinBuildHeight() {
+				return level().getMinBuildHeight();
 			}
 
 			@Override

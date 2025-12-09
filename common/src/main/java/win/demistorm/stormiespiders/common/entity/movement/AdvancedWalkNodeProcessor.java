@@ -739,7 +739,7 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 					int fallDistance = 0;
 					int preFallY = y;
 
-					while(y > this.cachedLevel.getMinY() && nodeType == PathType.OPEN) {
+					while(y > cachedLevel.getMinBuildHeight() && nodeType == PathType.OPEN) {
 						--y;
 
 						if(fallDistance++ >= Math.max(1, this.mob.getMaxFallDistance()) /*at least one chance is required for swimming*/ || y == 0) {
@@ -945,7 +945,7 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 		PathType nodeType = getRawPathNodeTypeCached(rawPathNodeTypeCache, blockaccessIn, pos.set(x, y, z));
 		boolean isWalkable = false;
 
-		if(nodeType == PathType.OPEN && y >= blockaccessIn.getMinY() + 1) {
+		if(nodeType == PathType.OPEN && y >= cachedLevel.getMinBuildHeight()) {
 			for(int i = 0; i < pathableFacings.length; i++) {
 				Direction pathableFacing = pathableFacings[i];
 

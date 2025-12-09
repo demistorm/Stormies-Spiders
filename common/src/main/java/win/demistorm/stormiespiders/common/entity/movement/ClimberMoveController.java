@@ -184,7 +184,7 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 				dz += oz;
 			}
 
-			Direction mainOffsetDir = Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz), Direction.UP);
+			Direction mainOffsetDir = Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz));
 
 			float reach;
 			switch(mainOffsetDir) {
@@ -246,7 +246,7 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 
 				// Prevent climbing on horizontal surfaces during rain when config is enabled
 				if(jumpDir == null && this.side != null && Math.abs(this.climber.getGroundDirection().getRight().y) > 0.5f &&
-				   (!this.climber.canAttachToSide(this.side) || !this.climber.canAttachToSide(Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz), Direction.UP))) &&
+				   (!this.climber.canAttachToSide(this.side) || !this.climber.canAttachToSide(Direction.getNearest(Mth.floor(dx), Mth.floor(dy), Mth.floor(dz)))) &&
 				   this.wantedY > this.mob.getY() + 0.1f && verticalOffset > 0.6f) {
 					jumpDir = new Vec3(0, 1, 0);
 				}
