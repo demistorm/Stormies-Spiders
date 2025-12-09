@@ -418,7 +418,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
 			// Prevent premature syncing of position causing overly smoothed movement
-			if(entityTracker != null && entityTracker.serverEntity.tickCount % entityTracker.serverEntity.updateInterval == 0) {
+			if(entityTracker != null && entityTracker.serverEntity.tickCount
+					% entityTracker.serverEntity.updateInterval == 0 && !Config.COMMON.disableDataSync()) { // Also check if syncing is disabled
 				Orientation orientation = this.getOrientation();
 
 				Vec3 look = orientation.getGlobal(this.getYRot(), this.getXRot());
