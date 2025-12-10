@@ -8,7 +8,7 @@ import win.demistorm.stormiespiders.common.entity.mob.IMobEntityRegisterGoalsHoo
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -18,7 +18,7 @@ import net.minecraft.world.entity.ai.goal.GoalSelector;
 import net.minecraft.world.entity.ai.goal.LeapAtTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.TargetGoal;
 import net.minecraft.world.entity.monster.Monster;
-import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.spider.Spider;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
@@ -36,7 +36,7 @@ import java.util.function.Predicate;
 public abstract class BetterSpiderEntityMixin extends Monster implements IClimberEntity, IMobEntityRegisterGoalsHook {
 
 	private static final UUID FOLLOW_RANGE_INCREASE_ID = UUID.fromString("9e815957-3a8e-4b65-afbc-eba39d2a06b4");
-	private static final AttributeModifier FOLLOW_RANGE_INCREASE = new AttributeModifier(ResourceLocation.fromNamespaceAndPath("stormiespiders", "follow_range_increase"), 8.0D, AttributeModifier.Operation.ADD_VALUE);
+	private static final AttributeModifier FOLLOW_RANGE_INCREASE = new AttributeModifier(Identifier.fromNamespaceAndPath("stormiespiders", "follow_range_increase"), 8.0D, AttributeModifier.Operation.ADD_VALUE);
 
 	private BetterSpiderEntityMixin(EntityType<? extends Monster> type, Level worldIn) {
 		super(type, worldIn);

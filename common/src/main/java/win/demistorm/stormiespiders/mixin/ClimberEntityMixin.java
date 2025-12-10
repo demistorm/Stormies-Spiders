@@ -24,8 +24,7 @@ import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.Identifier;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -43,7 +42,7 @@ import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.entity.monster.Spider;
+import net.minecraft.world.entity.monster.spider.Spider;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.Level;
@@ -75,7 +74,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	// Copy from LivingEntity
 	private static final UUID SLOW_FALLING_ID = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
-	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(ResourceLocation.fromNamespaceAndPath("stormiespiders", "slow_falling"), -0.07, AttributeModifier.Operation.ADD_VALUE);
+	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(Identifier.fromNamespaceAndPath("stormiespiders", "slow_falling"), -0.07, AttributeModifier.Operation.ADD_VALUE);
 
 
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
@@ -869,7 +868,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				this.setDeltaMovement(this.getDeltaMovement().add(boost));
 			}
 
-			this.hasImpulse = true;
+			this.needsSync = true;
 
 			return true;
 		}
