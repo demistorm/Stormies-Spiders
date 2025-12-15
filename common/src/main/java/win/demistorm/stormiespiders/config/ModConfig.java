@@ -15,6 +15,7 @@ public final class ModConfig {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static boolean preventClimbingInRain = false;
     private static boolean disableDataSync = false;
+    private static boolean canCrawlOnCeiling = true;
 
     // Data structure matching the JSON format
     public static final class ConfigData {
@@ -23,6 +24,7 @@ public final class ModConfig {
         public static final class GeneralSection {
             public boolean prevent_climbing_in_rain = false;
             public boolean disable_data_sync = false;
+            public boolean can_crawl_on_ceiling = true;
         }
     }
 
@@ -38,6 +40,15 @@ public final class ModConfig {
 
         public static boolean disableDataSync() {
             return disableDataSync;
+        }
+
+        public static boolean canCrawlOnCeiling() {
+            return canCrawlOnCeiling;
+        }
+
+        public static void setCanCrawlOnCeiling(boolean value) {
+            canCrawlOnCeiling = value;
+            save();
         }
     }
 
@@ -67,6 +78,7 @@ public final class ModConfig {
             if (data != null && data.general != null) {
                 preventClimbingInRain = data.general.prevent_climbing_in_rain;
                 disableDataSync = data.general.disable_data_sync;
+                canCrawlOnCeiling = data.general.can_crawl_on_ceiling;
             }
 
         } catch (IOException e) {
@@ -74,6 +86,7 @@ public final class ModConfig {
             // Use default values
             preventClimbingInRain = false;
             disableDataSync = false;
+            canCrawlOnCeiling = true;
         }
     }
 
@@ -88,6 +101,7 @@ public final class ModConfig {
             ConfigData data = new ConfigData();
             data.general.prevent_climbing_in_rain = preventClimbingInRain;
             data.general.disable_data_sync = disableDataSync;
+            data.general.can_crawl_on_ceiling = canCrawlOnCeiling;
 
             Files.writeString(CONFIG_FILE, GSON.toJson(data));
 
