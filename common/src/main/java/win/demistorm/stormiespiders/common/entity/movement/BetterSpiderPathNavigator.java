@@ -2,6 +2,7 @@ package win.demistorm.stormiespiders.common.entity.movement;
 
 import win.demistorm.stormiespiders.commonInit;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
+import win.demistorm.stormiespiders.config.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
@@ -13,7 +14,7 @@ public class BetterSpiderPathNavigator<T extends Mob & IClimberEntity> extends A
 	private BlockPos targetPosition;
 
 	public BetterSpiderPathNavigator(T entity, Level worldIn, boolean useVanillaBehaviour) {
-		super(entity, worldIn, false, true, true);
+		super(entity, worldIn, false, true, Config.COMMON.canCrawlOnCeiling());
 		this.useVanillaBehaviour = useVanillaBehaviour;
 	}
 
