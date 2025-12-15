@@ -17,6 +17,7 @@ public final class ConfigScreen {
         private final Screen parent;
         private final Minecraft client = Minecraft.getInstance();
         private boolean preventClimbingInRainValue = ModConfig.Data.preventClimbingInRain();
+        private boolean canCrawlOnCeilingValue = ModConfig.Data.canCrawlOnCeiling();
 
         protected SimpleToggleScreen(Screen parent) {
             super(Component.literal("Stormie's Spiders Configuration"));
@@ -44,14 +45,29 @@ public final class ConfigScreen {
                                     "EXPERIMENTAL: When enabled, spiders will not climb on surfaces during rain")))
                             .build());
 
+            // Ceiling crawling button
+            addRenderableWidget(
+                    Button.builder(
+                                    Component.literal("Ceiling Crawling: " + (canCrawlOnCeilingValue ? "ON" : "OFF")),
+                                    btn -> {
+                                        canCrawlOnCeilingValue = !canCrawlOnCeilingValue;
+                                        btn.setMessage(Component.literal(
+                                                "Ceiling Crawling: " + (canCrawlOnCeilingValue ? "ON" : "OFF")));
+                                    })
+                            .bounds(width / 2 - 80, height / 4 + 48, 160, 20)
+                            .tooltip(Tooltip.create(Component.literal(
+                                    "Allow spiders to crawl on ceilings for extra fun")))
+                            .build());
+
             // Done button
             addRenderableWidget(
                     Button.builder(Component.literal("Done"),
                                     btn -> {
-                                        // Save the setting
+                                        // Save the settings
                                         ModConfig.Data.setPreventClimbingInRain(preventClimbingInRainValue);
+                                        ModConfig.Data.setCanCrawlOnCeiling(canCrawlOnCeilingValue);
 
-                                        Constants.LOG.info("Config saved: preventClimbingInRain = {}", preventClimbingInRainValue);
+                                        Constants.LOG.info("Config saved: preventClimbingInRain = {}, canCrawlOnCeiling = {}", preventClimbingInRainValue, canCrawlOnCeilingValue);
                                         client.setScreen(parent);
                                     })
                             .bounds(width / 2 - 100, height - 27, 200, 20)
