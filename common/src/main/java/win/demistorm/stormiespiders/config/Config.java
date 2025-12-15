@@ -10,5 +10,9 @@ public class Config {
         public static boolean disableDataSync() {
             return ModConfig.Data.disableDataSync();
         }
+
+        public static boolean canCrawlOnCeiling() {
+            return ModConfig.Data.canCrawlOnCeiling();
+        }
     }
 }
