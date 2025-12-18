@@ -25,29 +25,19 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
-        // Store climber-specific data in the render state for use during rendering
+        // Store climber data for pose stack transformations
         if (entity instanceof IClimberEntity climber) {
-            Orientation orientation = climber.getOrientation();
-            Orientation renderOrientation = climber.calculateOrientation(partialTick);
-            climber.setRenderOrientation(renderOrientation);
-
-            float verticalOffset = climber.getVerticalOffset(partialTick);
-
-            // Store the necessary climber data for the render hook
-            // We'll access this via the ClientEventHandlers in the render method
             ClientEventHandlers.storeClimberData(entity, climber, partialTick);
         }
     }
 
     @Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("HEAD"))
     private void livingRenderPre(S renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, CallbackInfo ci) {
-        // Get the living entity from the render state's associated entity
         ClientEventHandlers.onPreRenderLivingFromState(renderState, poseStack);
     }
 
     @Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("RETURN"))
     private void livingRenderPost(S renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, CallbackInfo ci) {
-        // Post-render handling
         ClientEventHandlers.onPostRenderLivingFromState(renderState, poseStack, multiBufferSource);
     }
 }
