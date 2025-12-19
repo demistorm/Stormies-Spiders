@@ -25,7 +25,7 @@ public class ClientEventHandlers {
 		final float partialTicks;
 		final Orientation renderOrientation;
 		final float verticalOffset;
-		final Orientation currentOrientation; // Store current orientation too
+		final Orientation currentOrientation;
 
 		ClimberRenderData(IClimberEntity climber, float partialTicks, Orientation renderOrientation, float verticalOffset, Orientation currentOrientation) {
 			this.climber = climber;
@@ -35,7 +35,7 @@ public class ClientEventHandlers {
 			this.currentOrientation = currentOrientation;
 		}
 	}
-	
+
 	public static void onPreRenderLiving(LivingEntity entity, float partialTicks, PoseStack matrixStack) {
 
 		if(entity instanceof IClimberEntity) {
@@ -77,14 +77,21 @@ public class ClientEventHandlers {
 				matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
 				matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
 
-				
+
 				matrixStack.translate(-x, -y, -z);
 			}
 		}
 	}
 
-	// New methods for 1.21.4 render state approach
+	// 1.21.4 render state methods
 	public static void storeClimberData(LivingEntity entity, IClimberEntity climber, float partialTicks) {
+		// Only store data for IClimberEntity instances (spiders)
+		if (climber == null || entity == null) {
+			// Reset tracking to prevent leaks
+			currentRenderingEntityId = -1;
+			return;
+		}
+
 		// Calculate render orientation with proper interpolation via partialTicks
 		Orientation renderOrientation = climber.calculateOrientation(partialTicks);
 		climber.setRenderOrientation(renderOrientation);
@@ -103,26 +110,58 @@ public class ClientEventHandlers {
 	}
 
 	public static void onPreRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack) {
-		// Use the tracked entity ID from extractRenderState
+		// Use the tracked entity ID but validate entity type first
 		ClimberRenderData data = climberDataCache.get(currentRenderingEntityId);
-		if (data != null) {
+		if (data != null && isSafeToApplyClimberTransform(data)) {
 			applyClimberTransformPre(data, matrixStack);
 		}
 	}
 
 	public static void onPostRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack, MultiBufferSource bufferIn) {
 		ClimberRenderData data = climberDataCache.get(currentRenderingEntityId);
-		if (data != null) {
+		if (data != null && isSafeToApplyClimberTransform(data)) {
 			applyClimberTransformPost(data, matrixStack);
 			// Remove after rendering to prevent stale data
 			climberDataCache.remove(currentRenderingEntityId);
 		}
 
+		// Make sure no stale data remains
+		climberDataCache.remove(currentRenderingEntityId);
+
 		// Reset tracking
 		currentRenderingEntityId = -1;
+
+		// Clean up corrupted cache entries
+		cleanupCorruptedCacheEntries();
 	}
 
-	
+	// Clean up corrupted cache entries to prevent memory leaks
+	private static void cleanupCorruptedCacheEntries() {
+		// Only run cleanup occasionally
+		if (Math.random() < 0.001) { // 0.1% chance to clean up each frame
+			climberDataCache.entrySet().removeIf(entry -> {
+				ClimberRenderData data = entry.getValue();
+				// Remove entries with null data or non-spider entities
+				return data == null || data.climber == null || !isSafeToApplyClimberTransform(data);
+			});
+		}
+	}
+
+	// Check if it's safe to apply spider transformations
+	private static boolean isSafeToApplyClimberTransform(ClimberRenderData data) {
+		// Check for null data
+		if (data == null || data.climber == null) {
+			return false;
+		}
+
+		// Check if climber entity implements IClimberEntity
+		if (!(data.climber instanceof IClimberEntity)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	private static void applyClimberTransformPre(ClimberRenderData data, PoseStack matrixStack) {
 		IClimberEntity climber = data.climber;
 		Orientation renderOrientation = data.renderOrientation;
