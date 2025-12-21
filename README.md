@@ -10,6 +10,7 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 - Easy to build (just clone and gradlew build with JDK 21)
 - Cleaned up some code
 - Readded spiders unable to climb during rain feature (experimental)
+- Added spiders unable to climb on ceilings toggle
 - Added config screen
 
 ---
@@ -26,7 +27,7 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 | 1.21.10         | ✔️     |
 | Prepare for Publish         | ✔️   |
 | Publish         | ✔️   |
-| 1.21.11         | Todo   |
+| 1.21.11         | ✔️   |
 
 ---
 
