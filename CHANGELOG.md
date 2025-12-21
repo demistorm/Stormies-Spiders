@@ -1,5 +1,2 @@
-- Initial release
-- Added experimental toggle that disables spider climbing in the rain
-- Added config screen
-- Updated to new versions
-- Pathfinding is not perfect, but should be largely the same as previous renditions of Spiders 2.0
+- Added no climbing on ceiling option 
+- Fixed entities randomly spinning on 1.21.4
