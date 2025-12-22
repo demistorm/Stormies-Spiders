@@ -14,5 +14,13 @@ public class Config {
         public static boolean canCrawlOnCeiling() {
             return ModConfig.Data.canCrawlOnCeiling();
         }
+
+        public static boolean enableFallbackRotation() {
+            return ModConfig.Data.enableFallbackRotation();
+        }
+
+        public static int fallbackUpdateInterval() {
+            return ModConfig.Data.fallbackUpdateInterval();
+        }
     }
 }
