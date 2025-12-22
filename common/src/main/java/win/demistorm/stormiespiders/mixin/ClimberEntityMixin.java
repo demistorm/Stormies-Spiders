@@ -143,6 +143,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	private boolean clientTickedThisFrame = false;
 
+	// Fallback attachment system for vanilla servers
+	private boolean hasReceivedAttachmentData = false;
+	private int vanillaServerDetectionTimer = 0;
+	private boolean isUsingFallbackAttachment = false;
+	private int fallbackAttachmentUpdateTimer = 0;
+
 	private ClimberEntityMixin(EntityType<? extends PathfinderMob> type, Level worldIn) {
 		super(type, worldIn);
 	}
@@ -483,8 +489,20 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onLivingTick() {
-		// Client-side smoothing for interpolation
+		// Client-side smoothing for interpolation and fallback generation
 		if (this.level().isClientSide()) {
+			// Check for vanilla server after initial connection
+			if (!this.hasReceivedAttachmentData) {
+				this.vanillaServerDetectionTimer++;
+				if (this.vanillaServerDetectionTimer > 50) { // 2.5s
+					// No server attachment data received, assume vanilla server
+					this.isUsingFallbackAttachment = true;
+				}
+			}
+
+			// Update fallback attachment data
+			this.updateFallbackAttachmentData();
+
 			// Store previous smoothed values for sub-tick interpolation
 			this.prevSmoothedOffsetX = this.smoothedOffsetX;
 			this.prevSmoothedOffsetY = this.smoothedOffsetY;
@@ -699,6 +717,54 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		}
 	}
 
+	// Client-side fallback attachment generation for vanilla servers
+	private void updateFallbackAttachmentData() {
+		if (!this.level().isClientSide() || !this.isUsingFallbackAttachment || !Config.COMMON.enableFallbackRotation()) {
+			return;
+		}
+
+		// Update fallback attachment
+		this.fallbackAttachmentUpdateTimer++;
+		if (this.fallbackAttachmentUpdateTimer < Config.COMMON.fallbackUpdateInterval()) {
+			return;
+		}
+		this.fallbackAttachmentUpdateTimer = 0;
+
+		Vec3 p = this.position();
+		Vec3 s = p.add(0, this.getBbHeight() * 0.5f, 0);
+		AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(this.collisionsInclusionRange);
+
+		Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(
+				consumer -> this.forEachCollisonBox(inclusionBox, consumer),
+				s,
+				this.smoothedAttachmentNormal.scale(-1),
+				this.collisionsSmoothingRange,
+				1.0f,
+				0.001f,
+				20,
+				0.05f,
+				s
+		);
+
+		AABB entityBox = this.getBoundingBox();
+
+		if (attachmentPoint != null) {
+			Vec3 attachmentPos = attachmentPoint.getLeft();
+
+			double dx = Math.max(entityBox.minX - attachmentPos.x, attachmentPos.x - entityBox.maxX);
+			double dy = Math.max(entityBox.minY - attachmentPos.y, attachmentPos.y - entityBox.maxY);
+			double dz = Math.max(entityBox.minZ - attachmentPos.z, attachmentPos.z - entityBox.maxZ);
+
+			if (Math.max(dx, Math.max(dy, dz)) < 0.5f) {
+				// Set fallback attachment data
+				this.targetAttachmentOffsetX = Mth.clamp(attachmentPos.x - p.x, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+				this.targetAttachmentOffsetY = Mth.clamp(attachmentPos.y - p.y, 0, this.getBbHeight());
+				this.targetAttachmentOffsetZ = Mth.clamp(attachmentPos.z - p.z, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+				this.targetAttachmentNormal = attachmentPoint.getRight();
+			}
+		}
+	}
+
 	private float wrapAngleInRange(float angle, float target) {
 		while(target - angle < -180.0F) {
 			angle -= 360.0F;
@@ -787,6 +853,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Vec3 newNormal = new Vec3(normal.x(), normal.y(), normal.z());
 
 			if (this.level().isClientSide()) {
+				// Mark received server attachment data
+				this.hasReceivedAttachmentData = true;
+				this.isUsingFallbackAttachment = false;
+
 				// Client: set target, smoothly chase it
 				this.targetAttachmentNormal = newNormal;
 			} else {
@@ -798,6 +868,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
 
 			if (this.level().isClientSide()) {
+				// Mark received server attachment data
+				this.hasReceivedAttachmentData = true;
+				this.isUsingFallbackAttachment = false;
+
 				// Client: set target
 				this.targetAttachmentOffsetX = offset.x();
 				this.targetAttachmentOffsetY = offset.y();
