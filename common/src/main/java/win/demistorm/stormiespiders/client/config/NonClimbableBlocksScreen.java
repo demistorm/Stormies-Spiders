@@ -20,7 +20,7 @@ public class NonClimbableBlocksScreen extends Screen {
 	private final Screen parent;
 	private final Minecraft client = Minecraft.getInstance();
 
-	// UI Components
+	// UI Bits
 	private EditBox blockIdInput;
 	private BlockListWidget blockList;
 
@@ -41,7 +41,7 @@ public class NonClimbableBlocksScreen extends Screen {
 	@Override
 	protected void init() {
 		int topY = 40;
-		int listTopY = topY + 80; // More space for controls
+		int listTopY = topY + 80;
 		int bottomMargin = 70; // Space at bottom for Done button
 
 		// Text input for new blocks (left side)
@@ -73,7 +73,7 @@ public class NonClimbableBlocksScreen extends Screen {
 			.bounds(250, topY, 18, 18)
 			.tooltip(Tooltip.create(Component.literal(
 				"Wildcard Syntax:\n" +
-				"  *trapdoor - All trapdoors\n" +
+				"  *trapdoor - Anything ending with 'trapdoor'\n" +
 				"  *door* - Anything with 'door'\n" +
 				"  minecraft:* - All minecraft blocks\n" +
 				"  Exact: minecraft:oak_trapdoor"
@@ -130,10 +130,10 @@ public class NonClimbableBlocksScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		// Render all widgets (buttons, text input) through super
+		// Render all widgets (buttons, text input)
 		super.render(context, mouseX, mouseY, delta);
 
-		// Render the block list manually
+		// Render the block list
 		if (blockList != null) {
 			blockList.render(context, mouseX, mouseY, delta);
 		}
@@ -165,7 +165,7 @@ public class NonClimbableBlocksScreen extends Screen {
 		return super.keyPressed(event);
 	}
 
-	// Custom list widget for displaying blocks in two columns
+	// List widget for displaying blocks in two columns
 	private class BlockListWidget extends ObjectSelectionList<BlockListWidget.BlockEntry> {
 
 		public BlockListWidget(Minecraft client, int width, int height, int y, int bottom) {
@@ -229,10 +229,10 @@ public class NonClimbableBlocksScreen extends Screen {
 				leftRemoveButton.setPosition(x + columnWidth - 20, y + 6);
 				leftRemoveButton.render(context, mouseX, mouseY, delta);
 
-				// Left column - at y (top), bright red, underlined, NO truncation
+				// Left column
 				context.drawString(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 9, 0xFFFFFFFF);
 
-				// Right column (if exists)
+				// Right column
 				if (rightBlock != null) {
 					rightRemoveButton.setPosition(x + width - 20, y + 6);
 					rightRemoveButton.render(context, mouseX, mouseY, delta);
@@ -242,7 +242,7 @@ public class NonClimbableBlocksScreen extends Screen {
 
 			@Override
 			public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
-				// Forward click events to buttons (1.21.10 API)
+				// Forward click events to buttons
 				if (leftRemoveButton.mouseClicked(event, isDoubleClick)) {
 					return true;
 				}
