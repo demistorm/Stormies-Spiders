@@ -59,6 +59,16 @@ public final class ConfigScreen {
                                     "Allow spiders to crawl on ceilings for extra fun")))
                             .build());
 
+            // Disabled Climbing Blocks button
+            addRenderableWidget(
+                    Button.builder(
+                                    Component.literal("Disabled Climbing Blocks..."),
+                                    btn -> client.setScreen(new NonClimbableBlocksScreen(this)))
+                            .bounds(width / 2 - 80, height / 4 + 72, 160, 20)
+                            .tooltip(Tooltip.create(Component.literal(
+                                    "Configure which blocks spiders cannot climb on (supports wildcards)")))
+                            .build());
+
             // Done button
             addRenderableWidget(
                     Button.builder(Component.literal("Done"),
