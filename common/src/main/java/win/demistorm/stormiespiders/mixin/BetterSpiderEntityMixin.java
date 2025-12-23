@@ -1,6 +1,7 @@
 package win.demistorm.stormiespiders.mixin;
 
 import win.demistorm.stormiespiders.config.Config;
+import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.common.ModTags;
 import win.demistorm.stormiespiders.common.entity.goal.BetterLeapAtTargetGoal;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
@@ -63,6 +64,11 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 
 	@Override
 	public boolean canClimbOnBlock(BlockState state, BlockPos pos) {
+		// Check if block is in non-climbable config list
+		if (NonClimbableBlocksConfig.isBlockNonClimbable(state)) {
+			return false;
+		}
+
 		return !state.is(ModTags.NON_CLIMBABLE);
 	}
 
