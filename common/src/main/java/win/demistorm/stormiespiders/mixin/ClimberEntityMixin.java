@@ -1,6 +1,7 @@
 package win.demistorm.stormiespiders.mixin;
 
 import win.demistorm.stormiespiders.config.Config;
+import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
 import win.demistorm.stormiespiders.common.Matrix4f;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
@@ -517,6 +518,11 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean canClimbOnBlock(BlockState state, BlockPos pos) {
+		// Check if block is in non-climbable config list
+		if (NonClimbableBlocksConfig.isBlockNonClimbable(state)) {
+			return false;
+		}
+
 		// Prevent climbing on blocks during rain when config is enabled
 		if(Config.COMMON.preventClimbingInRain() && this.level().isRaining() && this.level().isRainingAt(pos)) {
 			return false;
