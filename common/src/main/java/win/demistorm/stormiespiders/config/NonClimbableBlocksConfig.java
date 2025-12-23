@@ -24,8 +24,8 @@ public final class NonClimbableBlocksConfig {
 	private static volatile Set<String> nonClimbablePatterns = ConcurrentHashMap.newKeySet();
 	private static volatile Set<ResourceLocation> exactMatchCache = ConcurrentHashMap.newKeySet();
 
-	// Load non-climbable blocks from config
-	static {
+	// Initialize the config (called during mod startup when registries are available)
+	public static void init() {
 		loadNonClimbableBlocks();
 	}
 
