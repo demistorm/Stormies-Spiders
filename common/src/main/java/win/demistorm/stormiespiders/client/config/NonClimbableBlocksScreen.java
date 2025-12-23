@@ -229,14 +229,14 @@ public class NonClimbableBlocksScreen extends Screen {
 				leftRemoveButton.setPosition(x + columnWidth - 20, y + 6);
 				leftRemoveButton.render(context, mouseX, mouseY, delta);
 
-				// Left column - at y (top), bright red, NO truncation
-				context.drawString(font, leftBlock, x + 5, y, 0xFFFF0000);
+				// Left column - at y (top), bright red, underlined, NO truncation
+				context.drawString(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 9, 0xFFFFFFFF);
 
 				// Right column (if exists)
 				if (rightBlock != null) {
 					rightRemoveButton.setPosition(x + width - 20, y + 6);
 					rightRemoveButton.render(context, mouseX, mouseY, delta);
-					context.drawString(font, rightBlock, x + columnWidth + 5, y, 0xFFFF0000);
+					context.drawString(font, Component.literal(rightBlock).withStyle(style -> style.withUnderlined(true)), x + columnWidth + 5, y + 9, 0xFFFFFFFF);
 				}
 			}
 
