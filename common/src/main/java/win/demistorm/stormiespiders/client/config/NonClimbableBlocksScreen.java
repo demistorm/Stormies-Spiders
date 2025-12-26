@@ -7,12 +7,9 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.ObjectSelectionList;
 import net.minecraft.client.gui.components.Tooltip;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 
-import java.util.ArrayList;
 import java.util.List;
 
 // Screen for managing non-climbable blocks
@@ -149,20 +146,16 @@ public class NonClimbableBlocksScreen extends Screen {
 
 		// Show count of blocks
 		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 10, 0xAAAAAA);
-
-		// Instructions at bottom
-		String instructions = "Wildcards: *trapdoor matches all trapdoors, *door* matches anything with 'door'";
-		context.drawCenteredString(font, instructions, width / 2, height - 75, 0x808080);
 	}
 
 	@Override
-	public boolean keyPressed(KeyEvent event) {
+	public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
 		// Handle Enter key in text field
-		if (blockIdInput.isFocused() && (event.key() == 257 || event.key() == 335)) {
+		if (blockIdInput.isFocused() && (keyCode == 257 || keyCode == 335)) {
 			addBlockId();
 			return true;
 		}
-		return super.keyPressed(event);
+		return super.keyPressed(keyCode, scanCode, modifiers);
 	}
 
 	// List widget for displaying blocks in two columns
@@ -216,37 +209,31 @@ public class NonClimbableBlocksScreen extends Screen {
 			}
 
 			@Override
-			public void renderContent(GuiGraphics context, int mouseX, int mouseY, boolean isHovering, float delta) {
-				// Get entry position (not content position - match VR Throwing Extensions pattern)
-				int x = this.getX();
-				int y = this.getY();
-				int width = this.getWidth();
-				int height = this.getHeight();
-
-				int columnWidth = width / 2;
+			public void render(GuiGraphics context, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+				int columnWidth = entryWidth / 2;
 
 				// Position and render left remove button
-				leftRemoveButton.setPosition(x + columnWidth - 20, y + 6);
-				leftRemoveButton.render(context, mouseX, mouseY, delta);
+				leftRemoveButton.setPosition(x + columnWidth - 20, y + 2);
+				leftRemoveButton.render(context, mouseX, mouseY, tickDelta);
 
-				// Left column
-				context.drawString(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 9, 0xFFFFFFFF);
+				// Left column text
+				context.drawString(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 6, 0xFFFFFFFF);
 
 				// Right column
 				if (rightBlock != null) {
-					rightRemoveButton.setPosition(x + width - 20, y + 6);
-					rightRemoveButton.render(context, mouseX, mouseY, delta);
-					context.drawString(font, Component.literal(rightBlock).withStyle(style -> style.withUnderlined(true)), x + columnWidth + 5, y + 9, 0xFFFFFFFF);
+					rightRemoveButton.setPosition(x + entryWidth - 20, y + 2);
+					rightRemoveButton.render(context, mouseX, mouseY, tickDelta);
+					context.drawString(font, Component.literal(rightBlock).withStyle(style -> style.withUnderlined(true)), x + columnWidth + 5, y + 6, 0xFFFFFFFF);
 				}
 			}
 
 			@Override
-			public boolean mouseClicked(MouseButtonEvent event, boolean isDoubleClick) {
+			public boolean mouseClicked(double mouseX, double mouseY, int button) {
 				// Forward click events to buttons
-				if (leftRemoveButton.mouseClicked(event, isDoubleClick)) {
+				if (leftRemoveButton.mouseClicked(mouseX, mouseY, button)) {
 					return true;
 				}
-				if (rightRemoveButton != null && rightRemoveButton.mouseClicked(event, isDoubleClick)) {
+				if (rightRemoveButton != null && rightRemoveButton.mouseClicked(mouseX, mouseY, button)) {
 					return true;
 				}
 				return false;
