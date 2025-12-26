@@ -16,6 +16,8 @@ public final class ModConfig {
     private static boolean preventClimbingInRain = false;
     private static boolean disableDataSync = false;
     private static boolean canCrawlOnCeiling = true;
+    private static boolean enableFallbackRotation = true;
+    private static int fallbackUpdateInterval = 1;
 
     // Data structure matching the JSON format
     public static final class ConfigData {
@@ -25,6 +27,8 @@ public final class ModConfig {
             public boolean prevent_climbing_in_rain = false;
             public boolean disable_data_sync = false;
             public boolean can_crawl_on_ceiling = true;
+            public boolean enable_fallback_rotation = true;
+            public int fallback_update_interval = 1;
         }
     }
 
@@ -49,6 +53,14 @@ public final class ModConfig {
         public static void setCanCrawlOnCeiling(boolean value) {
             canCrawlOnCeiling = value;
             save();
+        }
+
+        public static boolean enableFallbackRotation() {
+            return enableFallbackRotation;
+        }
+
+        public static int fallbackUpdateInterval() {
+            return fallbackUpdateInterval;
         }
     }
 
@@ -79,6 +91,8 @@ public final class ModConfig {
                 preventClimbingInRain = data.general.prevent_climbing_in_rain;
                 disableDataSync = data.general.disable_data_sync;
                 canCrawlOnCeiling = data.general.can_crawl_on_ceiling;
+                enableFallbackRotation = data.general.enable_fallback_rotation;
+                fallbackUpdateInterval = data.general.fallback_update_interval;
             }
 
         } catch (IOException e) {
@@ -87,6 +101,8 @@ public final class ModConfig {
             preventClimbingInRain = false;
             disableDataSync = false;
             canCrawlOnCeiling = true;
+            enableFallbackRotation = true;
+            fallbackUpdateInterval = 1;
         }
     }
 
@@ -102,6 +118,8 @@ public final class ModConfig {
             data.general.prevent_climbing_in_rain = preventClimbingInRain;
             data.general.disable_data_sync = disableDataSync;
             data.general.can_crawl_on_ceiling = canCrawlOnCeiling;
+            data.general.enable_fallback_rotation = enableFallbackRotation;
+            data.general.fallback_update_interval = fallbackUpdateInterval;
 
             Files.writeString(CONFIG_FILE, GSON.toJson(data));
 
