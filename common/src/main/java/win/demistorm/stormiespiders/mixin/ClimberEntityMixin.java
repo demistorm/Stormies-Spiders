@@ -59,6 +59,7 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
@@ -77,6 +78,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
 	private static final EntityDataAccessor<Rotations> ROTATION_HEAD;
+	private static final EntityDataAccessor<Rotations> ATTACHMENT_NORMAL;
+	private static final EntityDataAccessor<Rotations> ATTACHMENT_OFFSET;
 
 	static {
 		@SuppressWarnings("unchecked")
@@ -84,6 +87,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		ROTATION_BODY = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 		ROTATION_HEAD = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
+		ATTACHMENT_NORMAL = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
+		ATTACHMENT_OFFSET = SynchedEntityData.defineId(cls, EntityDataSerializers.ROTATIONS);
 	}
 
 	private double prevAttachmentOffsetX, prevAttachmentOffsetY, prevAttachmentOffsetZ;
@@ -91,6 +96,16 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	private Vec3 attachmentNormal = new Vec3(0, 1, 0);
 	private Vec3 prevAttachmentNormal = new Vec3(0, 1, 0);
+
+	// Client-side smoothing targets (what server sent us)
+	private Vec3 targetAttachmentNormal = new Vec3(0, 1, 0);
+	private double targetAttachmentOffsetX, targetAttachmentOffsetY, targetAttachmentOffsetZ;
+
+	// Client-side smoothed values (what we actually render)
+	private Vec3 smoothedAttachmentNormal = new Vec3(0, 1, 0);
+	private Vec3 prevSmoothedAttachmentNormal = new Vec3(0, 1, 0);
+	private double smoothedOffsetX, smoothedOffsetY, smoothedOffsetZ;
+	private double prevSmoothedOffsetX, prevSmoothedOffsetY, prevSmoothedOffsetZ;
 
 	private float prevOrientationYawDelta;
 	private float orientationYawDelta;
@@ -125,6 +140,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	private boolean isJumping = false;
 
+	// Fallback attachment system for vanilla servers
+	private boolean hasReceivedAttachmentData = false;
+	private int vanillaServerDetectionTimer = 0;
+	private boolean isUsingFallbackAttachment = false;
+	private int fallbackAttachmentUpdateTimer = 0;
+
 	private ClimberEntityMixin(EntityType<? extends PathfinderMob> type, Level worldIn) {
 		super(type, worldIn);
 	}
@@ -137,6 +158,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.moveControl = new ClimberMoveController<>(this);
 		this.lookControl = new ClimberLookController<>(this);
 		this.jumpControl = new ClimberJumpController<>(this);
+		// Initialize client smoothing values
+		this.targetAttachmentNormal = new Vec3(0, 1, 0);
+		this.smoothedAttachmentNormal = new Vec3(0, 1, 0);
+		this.prevSmoothedAttachmentNormal = new Vec3(0, 1, 0);
+		this.targetAttachmentOffsetY = 0.075;
+		this.smoothedOffsetY = 0.075;
+		this.prevSmoothedOffsetY = 0.075;
 	}
 
 	@Inject(method = "createNavigation", at = @At("HEAD"), cancellable = true)
@@ -153,8 +181,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	public void onRegisterData() {
 		this.entityData.define(ROTATION_BODY, new Rotations(0, 0, 0));
-
 		this.entityData.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+        this.entityData.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
+        this.entityData.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
 	}
 
 	@Override
@@ -177,6 +206,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		this.attachedTicks = nbt.getInt("stormiespiders.AttachedTicks");
 
 		this.orientation = this.calculateOrientation(1);
+
+		// Sync smoothed values on load
+		if (this.level().isClientSide()) {
+			this.targetAttachmentNormal = this.attachmentNormal;
+			this.smoothedAttachmentNormal = this.attachmentNormal;
+			this.prevSmoothedAttachmentNormal = this.attachmentNormal;
+		}
 	}
 
 	@Override
@@ -388,14 +424,28 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getAttachmentOffset(Direction.Axis axis, float partialTicks) {
-		switch(axis) {
-		default:
-		case X:
-			return (float) (this.prevAttachmentOffsetX + (this.attachmentOffsetX - this.prevAttachmentOffsetX) * partialTicks);
-		case Y:
-			return (float) (this.prevAttachmentOffsetY + (this.attachmentOffsetY - this.prevAttachmentOffsetY) * partialTicks);
-		case Z:
-			return (float) (this.prevAttachmentOffsetZ + (this.attachmentOffsetZ - this.prevAttachmentOffsetZ) * partialTicks);
+		if (this.level().isClientSide()) {
+			// Client: interpolate between previous and current smoothed values
+			switch (axis) {
+				default:
+				case X:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetX, this.smoothedOffsetX);
+				case Y:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetY, this.smoothedOffsetY);
+				case Z:
+					return (float) Mth.lerp(partialTicks, this.prevSmoothedOffsetZ, this.smoothedOffsetZ);
+			}
+		} else {
+			// Server: use raw values
+			switch (axis) {
+				default:
+				case X:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetX, this.attachmentOffsetX);
+				case Y:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetY, this.attachmentOffsetY);
+				case Z:
+					return (float) Mth.lerp(partialTicks, this.prevAttachmentOffsetZ, this.attachmentOffsetZ);
+			}
 		}
 	}
 
@@ -414,6 +464,19 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			// Prevent premature syncing of position causing overly smoothed movement
 			if(entityTracker != null && entityTracker.serverEntity.tickCount
 					% entityTracker.serverEntity.updateInterval == 0 && !Config.COMMON.disableDataSync()) { // Also check if syncing is disabled
+				// Sync attachment data only if data sync is enabled
+				this.entityData.set(ATTACHMENT_NORMAL, new Rotations(
+						(float) this.attachmentNormal.x,
+						(float) this.attachmentNormal.y,
+						(float) this.attachmentNormal.z
+				));
+
+				this.entityData.set(ATTACHMENT_OFFSET, new Rotations(
+						(float) this.attachmentOffsetX,
+						(float) this.attachmentOffsetY,
+						(float) this.attachmentOffsetZ
+				));
+
 				Orientation orientation = this.getOrientation();
 
 				Vec3 look = orientation.getGlobal(this.getYRot(), this.getXRot());
@@ -428,6 +491,40 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onLivingTick() {
+		// Client-side smoothing for interpolation and fallback generation
+		if (this.level().isClientSide()) {
+			// Check for vanilla server after initial connection
+			if (!this.hasReceivedAttachmentData) {
+				this.vanillaServerDetectionTimer++;
+				if (this.vanillaServerDetectionTimer > 50) { // 2.5s
+					// No server attachment data received, assume vanilla server
+					this.isUsingFallbackAttachment = true;
+				}
+			}
+
+			// Update fallback attachment data
+			this.updateFallbackAttachmentData();
+
+			// Store previous smoothed values for sub-tick interpolation
+			this.prevSmoothedOffsetX = this.smoothedOffsetX;
+			this.prevSmoothedOffsetY = this.smoothedOffsetY;
+			this.prevSmoothedOffsetZ = this.smoothedOffsetZ;
+			this.prevSmoothedAttachmentNormal = this.smoothedAttachmentNormal;
+
+			// Chase the target values
+			float smoothFactor = 0.5f;
+
+			this.smoothedOffsetX = Mth.lerp(smoothFactor, this.smoothedOffsetX, this.targetAttachmentOffsetX);
+			this.smoothedOffsetY = Mth.lerp(smoothFactor, this.smoothedOffsetY, this.targetAttachmentOffsetY);
+			this.smoothedOffsetZ = Mth.lerp(smoothFactor, this.smoothedOffsetZ, this.targetAttachmentOffsetZ);
+
+			this.smoothedAttachmentNormal = new Vec3(
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.x, this.targetAttachmentNormal.x),
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.y, this.targetAttachmentNormal.y),
+					Mth.lerp(smoothFactor, this.smoothedAttachmentNormal.z, this.targetAttachmentNormal.z)
+			).normalize();
+		}
+
 		this.updateWalkingSide();
 	}
 
@@ -645,9 +742,73 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		return angle;
 	}
 
+	// Client-side fallback attachment generation for vanilla servers
+	private void updateFallbackAttachmentData() {
+		if (!this.level().isClientSide() || !this.isUsingFallbackAttachment || !Config.COMMON.enableFallbackRotation()) {
+			return;
+		}
+
+		// Update fallback attachment
+		this.fallbackAttachmentUpdateTimer++;
+		if (this.fallbackAttachmentUpdateTimer < Config.COMMON.fallbackUpdateInterval()) {
+			return;
+		}
+		this.fallbackAttachmentUpdateTimer = 0;
+
+		Vec3 p = this.position();
+		Vec3 s = p.add(0, this.getBbHeight() * 0.5f, 0);
+		AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(this.collisionsInclusionRange);
+
+		Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(
+				consumer -> this.forEachCollisonBox(inclusionBox, consumer),
+				s,
+				this.smoothedAttachmentNormal.scale(-1),
+				this.collisionsSmoothingRange,
+				1.0f,
+				0.001f,
+				20,
+				0.05f,
+				s
+		);
+
+		AABB entityBox = this.getBoundingBox();
+
+		if (attachmentPoint != null) {
+			Vec3 attachmentPos = attachmentPoint.getLeft();
+
+			double dx = Math.max(entityBox.minX - attachmentPos.x, attachmentPos.x - entityBox.maxX);
+			double dy = Math.max(entityBox.minY - attachmentPos.y, attachmentPos.y - entityBox.maxY);
+			double dz = Math.max(entityBox.minZ - attachmentPos.z, attachmentPos.z - entityBox.maxZ);
+
+			if (Math.max(dx, Math.max(dy, dz)) < 0.5f) {
+				// Set fallback attachment data
+				this.targetAttachmentOffsetX = Mth.clamp(attachmentPos.x - p.x, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+				this.targetAttachmentOffsetY = Mth.clamp(attachmentPos.y - p.y, 0, this.getBbHeight());
+				this.targetAttachmentOffsetZ = Mth.clamp(attachmentPos.z - p.z, -this.getBbWidth() / 2, this.getBbWidth() / 2);
+				this.targetAttachmentNormal = attachmentPoint.getRight();
+			}
+		}
+	}
+
 	@Override
 	public Orientation calculateOrientation(float partialTicks) {
-		Vec3 attachmentNormal = this.prevAttachmentNormal.add(this.attachmentNormal.subtract(this.prevAttachmentNormal).scale(partialTicks));
+		Vec3 attachmentNormal;
+
+		if (this.level().isClientSide()) {
+			// Client: use smoothed and interpolated normal
+			attachmentNormal = new Vec3(
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.x, this.smoothedAttachmentNormal.x),
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.y, this.smoothedAttachmentNormal.y),
+					Mth.lerp(partialTicks, this.prevSmoothedAttachmentNormal.z, this.smoothedAttachmentNormal.z)
+			).normalize();
+		} else {
+			// Server: use raw interpolated values
+			attachmentNormal = new Vec3(
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.x, this.attachmentNormal.x),
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.y, this.attachmentNormal.y),
+					Mth.lerp(partialTicks, this.prevAttachmentNormal.z, this.attachmentNormal.z)
+			).normalize();
+		}
 
 		Vec3 localZ = new Vec3(0, 0, 1);
 		Vec3 localY = new Vec3(0, 1, 0);
@@ -699,7 +860,44 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
-		if(ROTATION_BODY.equals(key)) {
+		if (ATTACHMENT_NORMAL.equals(key)) {
+			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
+			Vec3 newNormal = new Vec3(normal.getX(), normal.getY(), normal.getZ());
+
+			if (this.level().isClientSide()) {
+				// Mark received server attachment data
+				this.hasReceivedAttachmentData = true;
+				this.isUsingFallbackAttachment = false;
+
+				// Client: set target, smoothly chase it
+				this.targetAttachmentNormal = newNormal;
+			} else {
+				// Server: direct assignment
+				this.prevAttachmentNormal = this.attachmentNormal;
+				this.attachmentNormal = newNormal;
+			}
+		} else if (ATTACHMENT_OFFSET.equals(key)) {
+			Rotations offset = this.entityData.get(ATTACHMENT_OFFSET);
+
+			if (this.level().isClientSide()) {
+				// Mark received server attachment data
+				this.hasReceivedAttachmentData = true;
+				this.isUsingFallbackAttachment = false;
+
+				// Client: set target
+				this.targetAttachmentOffsetX = offset.getX();
+				this.targetAttachmentOffsetY = offset.getY();
+				this.targetAttachmentOffsetZ = offset.getZ();
+			} else {
+				// Server: direct assignment
+				this.prevAttachmentOffsetX = this.attachmentOffsetX;
+				this.prevAttachmentOffsetY = this.attachmentOffsetY;
+				this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+				this.attachmentOffsetX = offset.getX();
+				this.attachmentOffsetY = offset.getY();
+				this.attachmentOffsetZ = offset.getZ();
+			}
+		} else if(ROTATION_BODY.equals(key)) {
 			Rotations rotation = this.entityData.get(ROTATION_BODY);
 			Vec3 look = new Vec3(rotation.getX(), rotation.getY(), rotation.getZ());
 
