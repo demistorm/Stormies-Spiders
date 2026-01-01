@@ -483,16 +483,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 						(float) this.attachmentOffsetY,
 						(float) this.attachmentOffsetZ
 				));
-
-				Orientation orientation = this.getOrientation();
-
-				Vec3 look = orientation.getGlobal(this.getYRot(), this.getXRot());
-				this.entityData.set(ROTATION_BODY, new Rotations((float) look.x, (float) look.y, (float) look.z));
-
-				look = orientation.getGlobal(this.yHeadRot, 0.0f);
-				this.entityData.set(ROTATION_HEAD, new Rotations((float) look.x, (float) look.y, (float) look.z));
-
-							}
+			}
 		}
 	}
 
@@ -712,41 +703,35 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		this.orientation = this.calculateOrientation(1);
 
-		Pair<Float, Float> newRotations = this.getOrientation().getLocalRotation(direction);
+		if (!this.level().isClientSide()) {
+			Pair<Float, Float> newRotations = this.getOrientation().getLocalRotation(direction);
 
-		float yawDelta = newRotations.getLeft() - this.getYRot();
-		float pitchDelta = newRotations.getRight() - this.getXRot();
+			float yawDelta = newRotations.getLeft() - this.getYRot();
+			float pitchDelta = newRotations.getRight() - this.getXRot();
 
-		this.prevOrientationYawDelta = this.orientationYawDelta;
-		this.orientationYawDelta = yawDelta;
+			this.prevOrientationYawDelta = this.orientationYawDelta;
+			this.orientationYawDelta = yawDelta;
 
-		this.yRot = Mth.wrapDegrees(this.yRot + yawDelta);
-		this.yRotO = this.wrapAngleInRange(this.yRotO/* + yawDelta*/, this.yRot);
-		this.lerpYRot = Mth.wrapDegrees(this.lerpYRot + yawDelta);
-
-		this.yBodyRot = Mth.wrapDegrees(this.yBodyRot + yawDelta);
-		this.yBodyRotO = this.wrapAngleInRange(this.yBodyRotO/* + yawDelta*/, this.yBodyRot);
-
-		this.yHeadRot = Mth.wrapDegrees(this.yHeadRot + yawDelta);
-		this.yHeadRotO = this.wrapAngleInRange(this.yHeadRotO/* + yawDelta*/, this.yHeadRot);
-		this.lerpYHeadRot = Mth.wrapDegrees(this.lerpYHeadRot + yawDelta);
-
-		this.xRot = Mth.wrapDegrees(this.xRot + pitchDelta);
-		this.xRotO = this.wrapAngleInRange(this.xRotO/* + pitchDelta*/, this.xRot);
-		this.lerpXRot = Mth.wrapDegrees(this.lerpXRot + pitchDelta);
+			this.setYRot(Mth.wrapDegrees(this.getYRot() + yawDelta));
+			this.setXRot(Mth.wrapDegrees(this.getXRot() + pitchDelta));
+			this.yBodyRot = Mth.wrapDegrees(this.yBodyRot + yawDelta);
+			this.yHeadRot = Mth.wrapDegrees(this.yHeadRot + yawDelta);
+		}
 	}
 
 	private float wrapAngleInRange(float angle, float target) {
-		while(target - angle < -180.0F) {
+		while (target - angle < -180.0F) {
 			angle -= 360.0F;
 		}
 
-		while(target - angle >= 180.0F) {
+		while (target - angle >= 180.0F) {
 			angle += 360.0F;
 		}
 
 		return angle;
 	}
+
+
 
 	// Client-side fallback attachment generation for vanilla servers
 	private void updateFallbackAttachmentData() {
@@ -851,17 +836,17 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getTargetYaw(double x, double y, double z, float yaw, float pitch, int posRotationIncrements) {
-		return (float) this.lerpYRot;
+		return yaw;
 	}
 
 	@Override
 	public float getTargetPitch(double x, double y, double z, float yaw, float pitch, int posRotationIncrements) {
-		return (float) this.lerpXRot;
+		return pitch;
 	}
 
 	@Override
 	public float getTargetHeadYaw(float yaw, int rotationIncrements) {
-		return (float) this.lerpYHeadRot;
+		return yaw;
 	}
 
 	@Override
@@ -903,22 +888,6 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				this.attachmentOffsetY = offset.getY();
 				this.attachmentOffsetZ = offset.getZ();
 			}
-		} else if(ROTATION_BODY.equals(key)) {
-			Rotations rotation = this.entityData.get(ROTATION_BODY);
-			Vec3 look = new Vec3(rotation.getX(), rotation.getY(), rotation.getZ());
-
-			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
-
-			this.lerpYRot = rotations.getLeft();
-			this.lerpXRot = rotations.getRight();
-		} else if(ROTATION_HEAD.equals(key)) {
-			Rotations rotation = this.entityData.get(ROTATION_HEAD);
-			Vec3 look = new Vec3(rotation.getX(), rotation.getY(), rotation.getZ());
-
-			Pair<Float, Float> rotations = this.getOrientation().getLocalRotation(look);
-
-			this.lerpYHeadRot = rotations.getLeft();
-			this.lerpHeadSteps = 3;
 		}
 	}
 
