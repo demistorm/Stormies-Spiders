@@ -3,7 +3,7 @@ package win.demistorm.stormiespiders.config;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.state.BlockState;
 import win.demistorm.stormiespiders.Constants;
 
@@ -22,7 +22,7 @@ public final class NonClimbableBlocksConfig {
 
 	// In-memory cache of non-climbable block patterns
 	private static volatile Set<String> nonClimbablePatterns = ConcurrentHashMap.newKeySet();
-	private static volatile Set<ResourceLocation> exactMatchCache = ConcurrentHashMap.newKeySet();
+	private static volatile Set<Identifier> exactMatchCache = ConcurrentHashMap.newKeySet();
 
 	// Initialize config
 	public static void init() {
@@ -40,7 +40,7 @@ public final class NonClimbableBlocksConfig {
 			return false;
 		}
 
-		ResourceLocation blockKey = BuiltInRegistries.BLOCK.getKey(state.getBlock());
+		Identifier blockKey = BuiltInRegistries.BLOCK.getKey(state.getBlock());
 		String blockId = blockKey.toString();
 
 		// Check exact match cache first for performance
@@ -91,7 +91,7 @@ public final class NonClimbableBlocksConfig {
 	// Set non-climbable blocks from a list and save to config (for config screen)
 	public static void setNonClimbableBlocksList(List<String> patterns) {
 		Set<String> newPatterns = ConcurrentHashMap.newKeySet();
-		Set<ResourceLocation> newCache = ConcurrentHashMap.newKeySet();
+		Set<Identifier> newCache = ConcurrentHashMap.newKeySet();
 
 		// Validate and process patterns
 		for (String pattern : patterns) {
@@ -103,7 +103,7 @@ public final class NonClimbableBlocksConfig {
 			// Check if it's an exact match (no wildcard)
 			if (!trimmed.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(trimmed);
+					Identifier key = Identifier.parse(trimmed);
 					if (BuiltInRegistries.BLOCK.containsKey(key)) {
 						newPatterns.add(trimmed);
 						newCache.add(key);
@@ -135,7 +135,7 @@ public final class NonClimbableBlocksConfig {
 		NonClimbableBlocksConfigData config = readConfig();
 
 		Set<String> patterns = ConcurrentHashMap.newKeySet();
-		Set<ResourceLocation> cache = ConcurrentHashMap.newKeySet();
+		Set<Identifier> cache = ConcurrentHashMap.newKeySet();
 
 		for (String pattern : config.non_climbable_blocks) {
 			String trimmed = pattern.trim();
@@ -146,7 +146,7 @@ public final class NonClimbableBlocksConfig {
 			// Check if it's an exact match (no wildcard)
 			if (!trimmed.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(trimmed);
+					Identifier key = Identifier.parse(trimmed);
 					if (BuiltInRegistries.BLOCK.containsKey(key)) {
 						patterns.add(trimmed);
 						cache.add(key);
@@ -192,11 +192,6 @@ public final class NonClimbableBlocksConfig {
 		} catch (IOException e) {
 			Constants.LOG.error("[NonClimbableBlocksConfig] Failed to write config file", e);
 		}
-	}
-
-	// Reload configuration (for commands or external updates)
-	public static void reloadConfig() {
-		loadNonClimbableBlocks();
 	}
 
 	private NonClimbableBlocksConfig() {}
