@@ -1,7 +1,5 @@
 package win.demistorm.stormiespiders.mixin;
 
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
 import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
