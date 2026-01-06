@@ -86,6 +86,21 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 
 	@Override
 	public float getPathingMalus(BlockGetter cache, Mob entity, BlockPathTypes nodeType, BlockPos pos, Vec3i direction, Predicate<Direction> sides) {
+		// Check all pathable surface blocks
+		BlockPos.MutableBlockPos offsetPos = new BlockPos.MutableBlockPos();
+
+		for(Direction offset : Direction.values()) {
+			if(sides.test(offset)) {
+				offsetPos.set(pos.getX() + offset.getStepX(), pos.getY() + offset.getStepY(), pos.getZ() + offset.getStepZ());
+				BlockState surfaceState = cache.getBlockState(offsetPos);
+
+				// If any surface block is non-climbable, reject this path
+				if(!this.canClimbOnBlock(surfaceState, offsetPos)) {
+					return -1.0f;
+				}
+			}
+		}
+
 		if(direction.getY() != 0) {
 			// Prevent vertical climbing pathfinding during rain when config is enabled
 			if(Config.COMMON.preventClimbingInRain() && this.level().isRaining() && this.level().isRainingAt(pos) &&
@@ -93,25 +108,7 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 				return -1.0f;
 			}
 
-			boolean hasClimbableNeigbor = false;
-
-			BlockPos.MutableBlockPos offsetPos = new BlockPos.MutableBlockPos();
-
-			for(Direction offset : Direction.values()) {
-				if(sides.test(offset)) {
-					offsetPos.set(pos.getX() + offset.getStepX(), pos.getY() + offset.getStepY(), pos.getZ() + offset.getStepZ());
-
-					BlockState state = cache.getBlockState(offsetPos);
-
-					if(this.canClimbOnBlock(state, offsetPos)) {
-						hasClimbableNeigbor = true;
-					}
-				}
-			}
-
-			if(!hasClimbableNeigbor) {
-				return -1.0f;
-			}
+			// Already checked climbable neighbors above
 		}
 
 		return entity.getPathfindingMalus(nodeType);
