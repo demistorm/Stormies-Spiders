@@ -1,5 +1,5 @@
 # Stormie's Spiders 🕷️
-This mod is a continuation of [Nyf's Spiders](https://github.com/Nyfaria/NyfsSpiders)
+This mod is a fork of [Nyf's Spiders](https://github.com/Nyfaria/NyfsSpiders)
 and [Spiders 2.0](https://github.com/TheCyberBrick/Spiders-2.0) 
 leveraging Architectury Loom for Fabric and NeoForge support. 
 
@@ -8,9 +8,11 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 ### Updates
 - Updated for newer versions
 - Easy to build (just clone and gradlew build with JDK 21)
-- Cleaned up some code
 - Readded spiders unable to climb during rain feature (experimental)
 - Added config screen
+- Added option for spiders to be unable to crawl on ceilings
+- Added fallback for rotations on servers without the mod
+- Added disabled blocks config/menu (for making traps, spider-proof bases, etc)
 
 ---
 
@@ -24,9 +26,7 @@ leveraging Architectury Loom for Fabric and NeoForge support.
 | 1.21.5          | ✔️     |
 | 1.21.8          | ✔️     |
 | 1.21.10         | ✔️     |
-| Prepare for Publish         | ✔️   |
-| Publish         | ✔️   |
-| 1.21.11         | Todo   |
+| 1.21.11         | ✔️     |
 
 ---
 
