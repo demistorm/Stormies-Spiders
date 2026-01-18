@@ -25,21 +25,20 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
         if (entity instanceof IClimberEntity climber) {
-
-            // Store climber data for pose stack transformations
-            ClientEventHandlers.storeClimberData(entity, climber, partialTick);
+            // Store climber data using renderState as key
+            ClientEventHandlers.storeClimberDataForRenderState(renderState, entity, climber, partialTick);
         }
     }
 
     @Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("HEAD"))
     private void livingRenderPre(S renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, CallbackInfo ci) {
-        // Get the living entity from the render state's associated entity
+        // Apply pre-render transformations
         ClientEventHandlers.onPreRenderLivingFromState(renderState, poseStack);
     }
 
     @Inject(method = "render(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", at = @At("RETURN"))
     private void livingRenderPost(S renderState, PoseStack poseStack, MultiBufferSource multiBufferSource, int packedLight, CallbackInfo ci) {
-        // Post-render handling
-        ClientEventHandlers.onPostRenderLivingFromState(renderState, poseStack, multiBufferSource);
+        // Apply post-render transformations and cleanup
+        ClientEventHandlers.onPostRenderLivingFromState(renderState, poseStack);
     }
 }
