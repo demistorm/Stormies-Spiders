@@ -9,16 +9,12 @@ import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
 
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.WeakHashMap;
 
 public class ClientEventHandlers {
 
-	// Use ConcurrentHashMap for thread safety and store by entity ID
-	private static final Map<Integer, ClimberRenderData> climberDataCache = new ConcurrentHashMap<>();
-
-	// Track the current entity ID being rendered (set during extractRenderState)
-	private static int currentRenderingEntityId = -1;
+	// WeakHashMap for automatic cleanup and render state tracking
+	private static final WeakHashMap<LivingEntityRenderState, ClimberRenderData> renderStateDataMap = new WeakHashMap<>();
 
 	private static class ClimberRenderData {
 		final IClimberEntity climber;
@@ -84,82 +80,43 @@ public class ClientEventHandlers {
 	}
 
 	// 1.21.4 render state methods
-	public static void storeClimberData(LivingEntity entity, IClimberEntity climber, float partialTicks) {
-		// Only store data for IClimberEntity instances (spiders)
-		if (climber == null || entity == null) {
-			// Reset tracking to prevent leaks
-			currentRenderingEntityId = -1;
-			return;
-		}
-
+	// Store climber data using renderState as key (survives batched rendering)
+	public static void storeClimberDataForRenderState(LivingEntityRenderState renderState,
+													  LivingEntity entity,
+													  IClimberEntity climber,
+													  float partialTicks) {
 		// Calculate render orientation with proper interpolation via partialTicks
 		Orientation renderOrientation = climber.calculateOrientation(partialTicks);
 		climber.setRenderOrientation(renderOrientation);
 
 		float verticalOffset = climber.getVerticalOffset(partialTicks);
-		int entityId = entity.getId();
 
-		// Store with entity ID as key
-		climberDataCache.put(entityId, new ClimberRenderData(
+		// Store with renderState as key (persists through rendering pipeline)
+		renderStateDataMap.put(renderState, new ClimberRenderData(
 			climber, partialTicks, renderOrientation, verticalOffset,
 			climber.getOrientation()
 		));
-
-		// Track which entity is about to render
-		currentRenderingEntityId = entityId;
 	}
 
+	// Apply transformations before main render
 	public static void onPreRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack) {
-		// Use the tracked entity ID but validate entity type first
-		ClimberRenderData data = climberDataCache.get(currentRenderingEntityId);
-		if (data != null && isSafeToApplyClimberTransform(data)) {
+		ClimberRenderData data = renderStateDataMap.get(renderState);
+		if (data != null) {
+			matrixStack.pushPose(); // Push to ensure clean state
 			applyClimberTransformPre(data, matrixStack);
 		}
 	}
 
-	public static void onPostRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack, MultiBufferSource bufferIn) {
-		ClimberRenderData data = climberDataCache.get(currentRenderingEntityId);
-		if (data != null && isSafeToApplyClimberTransform(data)) {
+	// Reverse transformations after main render
+	public static void onPostRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack) {
+		ClimberRenderData data = renderStateDataMap.get(renderState);
+		if (data != null) {
 			applyClimberTransformPost(data, matrixStack);
-			// Remove after rendering to prevent stale data
-			climberDataCache.remove(currentRenderingEntityId);
+			matrixStack.popPose(); // Pop to restore state
+
+			// Remove from map (WeakHashMap handles cleanup if missed)
+			renderStateDataMap.remove(renderState);
 		}
-
-		// Make sure no stale data remains
-		climberDataCache.remove(currentRenderingEntityId);
-
-		// Reset tracking
-		currentRenderingEntityId = -1;
-
-		// Clean up corrupted cache entries
-		cleanupCorruptedCacheEntries();
-	}
-
-	// Clean up corrupted cache entries to prevent memory leaks
-	private static void cleanupCorruptedCacheEntries() {
-		// Only run cleanup occasionally
-		if (Math.random() < 0.001) { // 0.1% chance to clean up each frame
-			climberDataCache.entrySet().removeIf(entry -> {
-				ClimberRenderData data = entry.getValue();
-				// Remove entries with null data or non-spider entities
-				return data == null || data.climber == null || !isSafeToApplyClimberTransform(data);
-			});
-		}
-	}
-
-	// Check if it's safe to apply spider transformations
-	private static boolean isSafeToApplyClimberTransform(ClimberRenderData data) {
-		// Check for null data
-		if (data == null || data.climber == null) {
-			return false;
-		}
-
-		// Check if climber entity implements IClimberEntity
-		if (!(data.climber instanceof IClimberEntity)) {
-			return false;
-		}
-
-		return true;
 	}
 
 	private static void applyClimberTransformPre(ClimberRenderData data, PoseStack matrixStack) {
