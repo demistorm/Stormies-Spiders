@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 
 public final class ModConfig {
 
-    private static final Path CONFIG_FILE = Paths.get("config", "stormiespiders.json");
+    private static final Path CONFIG_FILE = Paths.get("config", "stormiespiders", "stormiespiders.json");
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
     private static boolean preventClimbingInRain = false;
     private static boolean disableDataSync = false;
