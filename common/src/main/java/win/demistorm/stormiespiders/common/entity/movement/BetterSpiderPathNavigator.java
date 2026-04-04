@@ -12,6 +12,7 @@ import net.minecraft.world.level.pathfinder.Path;
 public class BetterSpiderPathNavigator<T extends Mob & IClimberEntity> extends AdvancedClimberPathNavigator<T> {
 	private boolean useVanillaBehaviour;
 	private BlockPos targetPosition;
+	private boolean wasFollowingPath;
 
 	public BetterSpiderPathNavigator(T entity, Level worldIn, boolean useVanillaBehaviour) {
 		super(entity, worldIn, false, true, Config.COMMON.canCrawlOnCeiling());
@@ -45,16 +46,20 @@ public class BetterSpiderPathNavigator<T extends Mob & IClimberEntity> extends A
 	@Override
 	public void tick() {
 		if(!this.isDone()) {
+			this.wasFollowingPath = true;
 			super.tick();
-		} else {
-			if(this.targetPosition != null) {
-				if(!this.targetPosition.closerThan(this.mob.blockPosition(), Math.max((double) this.mob.getBbWidth(), 1.0D)) && (!(this.mob.getY() > (double) this.targetPosition.getY()) || !(commonInit.blockPos(this.targetPosition.getX(), this.mob.getY(), this.targetPosition.getZ())).closerThan(this.mob.blockPosition(), Math.max((double) this.mob.getBbWidth(), 1.0D)))) {
-					this.mob.getMoveControl().setWantedPosition((double) this.targetPosition.getX(), (double) this.targetPosition.getY(), (double) this.targetPosition.getZ(), this.speedModifier);
-				} else {
-					this.targetPosition = null;
+		} else if(this.wasFollowingPath && this.targetPosition != null) {
+			this.wasFollowingPath = false;
+			if(!this.targetPosition.closerThan(this.mob.blockPosition(), Math.max((double) this.mob.getBbWidth(), 1.0D)) && (!(this.mob.getY() > (double) this.targetPosition.getY()) || !(commonInit.blockPos(this.targetPosition.getX(), this.mob.getY(), this.targetPosition.getZ())).closerThan(this.mob.blockPosition(), Math.max((double) this.mob.getBbWidth(), 1.0D)))) {
+				Path path = this.createPath(this.targetPosition, 0);
+				if(path != null) {
+					this.moveTo(path, this.speedModifier);
 				}
+			} else {
+				this.targetPosition = null;
 			}
-
+		} else {
+			this.wasFollowingPath = false;
 		}
 	}
 }
