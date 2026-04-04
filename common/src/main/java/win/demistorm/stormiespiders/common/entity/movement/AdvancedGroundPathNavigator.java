@@ -159,6 +159,8 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 				for(int xzo = -ceilHalfWidth; xzo <= ceilHalfWidth; xzo++) {
 					BlockPos pos = commonInit.blockPos(checkPos.x + (axis != 0 ? xzo : 0), checkPos.y + (axis != 1 ? yo : 0), checkPos.z + (axis != 2 ? xzo : 0));
 
+					if (!this.advancedPathFindingEntity.level().isLoaded(pos)) continue;
+
 					BlockState state = this.advancedPathFindingEntity.level().getBlockState(pos);
 
 					PathType nodeType = state.isPathfindable(PathComputationType.LAND) ? PathType.OPEN : PathType.BLOCKED;
