@@ -155,6 +155,9 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         this.verticalFacing = Direction.getNearest(Mth.floor(upVector.x), Mth.floor(upVector.y), Mth.floor(upVector.z), Direction.UP);
 
         //Look up to 4 nodes ahead so it doesn't backtrack on positions with multiple path sides when changing/updating path
+        int nodeIndexBeforeLoop = this.path.getNextNodeIndex();
+        boolean advanced = false;
+
         for (int i = 4; i >= 0; i--) {
             if (this.path.getNextNodeIndex() + i < this.path.getNodeCount()) {
                 Node currentTarget = this.path.getNode(this.path.getNextNodeIndex() + i);
@@ -177,8 +180,21 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
 
                 if (isOnSameSideAsTarget && (isWaypointInReach || (i == 0 && this.mob.getNavigation().canCutCorner(this.path.getNextNode().type) && this.isNextTargetInLine(pos, sizeX, sizeY, sizeZ, 1 + i)))) {
                     this.path.setNextNodeIndex(this.path.getNextNodeIndex() + 1 + i);
+                    advanced = true;
                     break;
                 }
+            }
+        }
+
+        // Fallback: if side matching blocked all advancement but current waypoint is in reach, advance anyway
+        if (!advanced && this.path.getNextNodeIndex() == nodeIndexBeforeLoop && nodeIndexBeforeLoop < this.path.getNodeCount() - 1) {
+            Node currentNode = this.path.getNode(nodeIndexBeforeLoop);
+            double cdx = Math.abs(currentNode.x + (int) (this.mob.getBbWidth() + 1.0f) * 0.5f - this.mob.getX());
+            double cdy = Math.abs(currentNode.y - this.mob.getY());
+            double cdz = Math.abs(currentNode.z + (int) (this.mob.getBbWidth() + 1.0f) * 0.5f - this.mob.getZ());
+
+            if (cdx < this.maxDistanceToWaypoint && cdy < maxDistanceToWaypointY && cdz < this.maxDistanceToWaypoint) {
+                this.path.setNextNodeIndex(nodeIndexBeforeLoop + 1);
             }
         }
 
