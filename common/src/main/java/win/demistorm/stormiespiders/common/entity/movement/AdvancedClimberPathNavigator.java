@@ -67,7 +67,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         }
 
         if (!this.isDone()) {
-            if (this.canUpdatePath()) {
+            if (this.canUpdatePath() && this.tick % 2 == 0) {
                 this.followThePath();
             } else if (this.path != null && !this.path.isDone()) {
                 Vec3 pos = this.getTempMobPos();
@@ -108,6 +108,10 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
 
     public Vec3 getExactPathingTarget(BlockGetter blockaccess, BlockPos pos, Direction dir) {
         BlockPos offsetPos = pos.relative(dir);
+
+        if (!this.level.isLoaded(offsetPos)) {
+            return Vec3.atBottomCenterOf(pos);
+        }
 
         VoxelShape shape = blockaccess.getBlockState(offsetPos).getCollisionShape(blockaccess, offsetPos);
 
@@ -424,6 +428,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                         int yBelow = unswizzle(obx, by + (invertY ? 1 : -1), obz, ax, ay, az, Direction.Axis.Y);
                         int zBelow = unswizzle(obx, by + (invertY ? 1 : -1), obz, ax, ay, az, Direction.Axis.Z);
                         BlockPos posBelow = new BlockPos(xBelow, yBelow, zBelow);
+                        if (!this.level.isLoaded(posBelow)) return false;
                         PathType nodeTypeBelow = this.nodeEvaluator.getPathType(this.mob, posBelow);
 
                         if (nodeTypeBelow == PathType.WATER) {
@@ -442,6 +447,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                         int nodeY = unswizzle(obx, by, obz, ax, ay, az, Direction.Axis.Y);
                         int nodeZ = unswizzle(obx, by, obz, ax, ay, az, Direction.Axis.Z);
                         BlockPos pos = new BlockPos(nodeX, nodeY, nodeZ);
+                        if (!this.level.isLoaded(pos)) return false;
                         PathType nodeType = this.nodeEvaluator.getPathType(this.mob, pos);
                         float f = this.mob.getPathfindingMalus(nodeType);
 
@@ -462,7 +468,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
 
     protected boolean isPositionClear(int x, int y, int z, int sizeX, int sizeY, int sizeZ, Vec3 start, double dx, double dz, double minDotProduct, Direction.Axis ax, Direction.Axis ay, Direction.Axis az) {
         for (BlockPos pos : BlockPos.betweenClosed(new BlockPos(x, y, z), new BlockPos(x + sizeX - 1, y + sizeY - 1, z + sizeZ - 1))) {
-            if (level.isLoaded(pos)) continue;
+            if (!level.isLoaded(pos)) continue;
             double offsetX = swizzle(pos.getX(), pos.getY(), pos.getZ(), ax) + 0.5D - swizzle(start, ax);
             double pffsetZ = swizzle(pos.getX(), pos.getY(), pos.getZ(), az) + 0.5D - swizzle(start, az);
 
