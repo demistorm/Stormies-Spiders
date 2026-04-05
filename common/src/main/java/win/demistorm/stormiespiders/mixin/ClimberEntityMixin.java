@@ -52,6 +52,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.border.WorldBorder;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.pathfinder.Node;
+import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
@@ -138,6 +139,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	private double preMoveY;
 
 	private Vec3 jumpDir;
+
+	private Vec3 lastStuckCheckPos = null;
 
 	private boolean isJumping = false;
 
@@ -1153,6 +1156,43 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			} else {
 				this.setDeltaMovement(Vec3.ZERO);
 			}
+		}
+
+		// Stuck detection: every 10 ticks check if spider has made progress
+		if(this.tickCount % 10 == 0) {
+			Vec3 currentPos = this.position();
+			if(this.lastStuckCheckPos != null) {
+				double distanceMoved = currentPos.distanceTo(this.lastStuckCheckPos);
+				if(distanceMoved < 0.2D) {
+					PathNavigation nav = this.getNavigation();
+					Path path = nav != null ? nav.getPath() : null;
+					if(path != null && !path.isDone()) {
+						Vec3 waypoint = path.getNextEntityPos(this);
+						Vec3 diff = waypoint.subtract(currentPos);
+						Vec3 up = orientation.getGlobal(this.yRot, -90.0f);
+						Vec3 dotComponent = up.scale(up.dot(diff));
+						Vec3 forwardComponent = diff.subtract(dotComponent);
+
+						Vec3 currentMotion = this.getDeltaMovement();
+						Vec3 jumpVector = Vec3.ZERO;
+
+						if(forwardComponent.lengthSqr() > 1.0E-7D) {
+							jumpVector = forwardComponent.normalize().scale(0.4D).add(currentMotion.scale(0.2D));
+							jumpVector = new Vec3(jumpVector.x * (1 - Math.abs(up.x)), jumpVector.y, jumpVector.z * (1 - Math.abs(up.z)));
+						}
+
+						jumpVector = jumpVector.add(up.scale(0.4D));
+
+						this.setDeltaMovement(jumpVector);
+						this.hasImpulse = true;
+
+						float rx = (float) orientation.localZ.dot(jumpVector);
+						float ry = (float) orientation.localX.dot(jumpVector);
+						this.setYRot(270.0f - (float) Math.toDegrees(Mth.atan2(rx, ry)));
+					}
+				}
+			}
+			this.lastStuckCheckPos = currentPos;
 		}
 
 		this.calculateEntityAnimation( true);
