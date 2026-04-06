@@ -18,7 +18,6 @@ public final class ConfigScreen {
         private final Minecraft client = Minecraft.getInstance();
         private boolean preventClimbingInRainValue = ModConfig.Data.preventClimbingInRain();
         private boolean canCrawlOnCeilingValue = ModConfig.Data.canCrawlOnCeiling();
-        private boolean canSwimValue = ModConfig.Data.canSwim();
 
         protected SimpleToggleScreen(Screen parent) {
             super(Component.literal("Stormie's Spiders Configuration"));
@@ -70,18 +69,14 @@ public final class ConfigScreen {
                                     "Configure which blocks spiders cannot climb on (supports wildcards)")))
                             .build());
 
-            // Can Swim button
+            // Extras button
             addRenderableWidget(
                     Button.builder(
-                                    Component.literal("Can Swim: " + (canSwimValue ? "ON" : "OFF")),
-                                    btn -> {
-                                        canSwimValue = !canSwimValue;
-                                        btn.setMessage(Component.literal(
-                                                "Can Swim: " + (canSwimValue ? "ON" : "OFF")));
-                                    })
+                                    Component.literal("Extras..."),
+                                    btn -> client.setScreen(new ExtrasScreen.ExtrasToggleScreen(this)))
                             .bounds(width / 2 - 80, height / 4 + 96, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
-                                    "When disabled, spiders cannot swim and will sink water")))
+                                    "Extra configuration options")))
                             .build());
 
             // Done button
@@ -91,9 +86,8 @@ public final class ConfigScreen {
                                         // Save the settings
                                         ModConfig.Data.setPreventClimbingInRain(preventClimbingInRainValue);
                                         ModConfig.Data.setCanCrawlOnCeiling(canCrawlOnCeilingValue);
-                                        ModConfig.Data.setCanSwim(canSwimValue);
 
-                                        Constants.LOG.info("Config saved: preventClimbingInRain = {}, canCrawlOnCeiling = {}, canSwim = {}", preventClimbingInRainValue, canCrawlOnCeilingValue, canSwimValue);
+                                        Constants.LOG.info("Config saved: preventClimbingInRain = {}, canCrawlOnCeiling = {}", preventClimbingInRainValue, canCrawlOnCeilingValue);
                                         client.setScreen(parent);
                                     })
                             .bounds(width / 2 - 100, height - 27, 200, 20)
