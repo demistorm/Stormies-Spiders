@@ -55,4 +55,13 @@ public interface IClimberEntity extends IAdvancedPathFindingEntity {
 	public void setCollisionsSmoothingRange(float range);
 	
 	public void setJumpDirection(@Nullable Vec3 dir);
+
+	public default boolean isEscapingWater() { return false; }
+
+	public default void setEscapingWater(boolean value) {}
+
+	@Nullable
+	public default Vec3 getWaterEscapeTarget() { return null; }
+
+	public default void setWaterEscapeTarget(@Nullable Vec3 target) {}
 }

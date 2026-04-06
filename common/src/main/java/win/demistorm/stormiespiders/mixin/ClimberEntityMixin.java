@@ -66,6 +66,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.invoke.MethodHandles;
 import java.util.ArrayList;
@@ -127,6 +128,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 
 	private boolean isTravelingInFluid = false;
+
+	private boolean isEscapingWater = false;
+	private Vec3 waterEscapeTarget = null;
 
 	private float collisionsInclusionRange = 2.0f;
 	private float collisionsSmoothingRange = 1.25f;
@@ -248,6 +252,26 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	@Override
 	public void setCanClimbInLava(boolean value) {
 		this.canClimbInLava = value;
+	}
+
+	@Override
+	public boolean isEscapingWater() {
+		return this.isEscapingWater;
+	}
+
+	@Override
+	public void setEscapingWater(boolean value) {
+		this.isEscapingWater = value;
+	}
+
+	@Override
+	public Vec3 getWaterEscapeTarget() {
+		return this.waterEscapeTarget;
+	}
+
+	@Override
+	public void setWaterEscapeTarget(Vec3 target) {
+		this.waterEscapeTarget = target;
 	}
 
 	@Override
@@ -973,14 +997,40 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			if(!this.canClimbInWater && this.isInWater() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState)) {
 				this.isTravelingInFluid = true;
 
-				if(canTravel) {
+				if(!Config.COMMON.canSwim()) {
 					return false;
+				}
+
+				if(canTravel) {
+					if(this.isEscapingWater && Config.COMMON.canSwim()) {
+						this.travelWaterEscape();
+						this.updateWaterEscapeOrientation();
+					} else {
+						Vec3 motion = this.getDeltaMovement();
+						motion = motion.add(0, 0.01, 0);
+						motion = motion.add(
+							(this.random.nextFloat() - 0.5) * 0.01,
+							0,
+							(this.random.nextFloat() - 0.5) * 0.01
+						);
+						motion = motion.scale(0.8);
+						this.setDeltaMovement(motion);
+						this.move(MoverType.SELF, motion);
+						this.calculateEntityAnimation(true);
+					}
+					return true;
 				}
 			} else if(!this.canClimbInLava && this.isInLava() && this.isAffectedByFluids() && !this.canStandOnFluid(fluidState)) {
 				this.isTravelingInFluid = true;
 
 				if(canTravel) {
-					return false;
+					Vec3 motion = this.getDeltaMovement();
+					motion = motion.add(0, 0.01, 0);
+					motion = motion.scale(0.8);
+					this.setDeltaMovement(motion);
+					this.move(MoverType.SELF, motion);
+					this.calculateEntityAnimation(true);
+					return true;
 				}
 			} else if(canTravel) {
 				this.travelOnGround(relative);
@@ -999,6 +1049,70 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		}
 	}
 
+	private void updateWaterEscapeOrientation() {
+		this.prevAttachmentOffsetX = this.attachmentOffsetX;
+		this.prevAttachmentOffsetY = this.attachmentOffsetY;
+		this.prevAttachmentOffsetZ = this.attachmentOffsetZ;
+		this.prevAttachmentNormal = this.attachmentNormal;
+
+		Vec3 movement = this.getDeltaMovement();
+		double horizontalSpeed = Math.sqrt(movement.x * movement.x + movement.z * movement.z);
+
+		Vec3 waterNormal;
+		if(horizontalSpeed > 0.001D) {
+			Vec3 horizontalDir = new Vec3(movement.x, 0, movement.z).normalize();
+			waterNormal = new Vec3(0, 1, 0).add(horizontalDir.scale(-0.35)).normalize();
+		} else {
+			waterNormal = new Vec3(0, 1, 0);
+		}
+
+		float blendSpeed = 0.15f;
+		this.attachmentNormal = this.attachmentNormal.add(waterNormal.subtract(this.attachmentNormal).scale(blendSpeed)).normalize();
+
+		this.attachmentOffsetX = 0;
+		this.attachmentOffsetY = this.getVerticalOffset(1);
+		this.attachmentOffsetZ = 0;
+
+		this.attachedTicks = 0;
+
+		this.orientation = this.calculateOrientation(1);
+	}
+
+	private void travelWaterEscape() {
+		Vec3 movement = this.getDeltaMovement();
+
+		if(this.isUnderWater()) {
+			movement = movement.add(0, 0.025, 0);
+		} else {
+			if(movement.y < 0) {
+				movement = new Vec3(movement.x, movement.y * 0.5, movement.z);
+			}
+			movement = movement.add(0, 0.01, 0);
+		}
+
+		Vec3 escapeTarget = this.getWaterEscapeTarget();
+		if(escapeTarget != null) {
+			Vec3 toShore = escapeTarget.subtract(this.position());
+			Vec3 horizontalDir = new Vec3(toShore.x, 0, toShore.z);
+			double horizontalDist = horizontalDir.length();
+			if(horizontalDist > 0.1D) {
+				horizontalDir = horizontalDir.normalize();
+				double lateralSpeed = 0.02;
+				movement = movement.add(horizontalDir.scale(lateralSpeed));
+			}
+		} else {
+			double driftX = (this.random.nextFloat() - 0.5) * 0.02;
+			double driftZ = (this.random.nextFloat() - 0.5) * 0.02;
+			movement = movement.add(driftX, 0, driftZ);
+		}
+
+		movement = movement.scale(0.8);
+
+		this.setDeltaMovement(movement);
+		this.move(MoverType.SELF, movement);
+
+		this.calculateEntityAnimation(true);
+	}
 
 	private float getRelevantMoveFactor(float slipperiness) {
 		return this.onGround()? this.getSpeed() * (0.16277136F / (slipperiness * slipperiness * slipperiness)) : this.getFlyingSpeed();
@@ -1202,6 +1316,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onMove(MoverType type, Vec3 pos, boolean pre) {
+		if(this.isInWater() && !this.canClimbInWater) {
+			return false;
+		}
+
 		if(pre) {
 			this.preWalkingPosition = this.position();
 			this.preMoveY = this.getY();
