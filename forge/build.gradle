@@ -4,7 +4,7 @@ plugins {
 
 architectury {
     platformSetupLoomIde()
-    fabric()
+    forge()
 }
 
 loom {
@@ -12,47 +12,58 @@ loom {
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
-    mixin {
-        defaultRefmapName.set("${mod_id}.refmap.json")
+
+    forge {
+        mixinConfig "${mod_id}.mixins.json"
     }
 }
 
 configurations {
     common
-    shadowCommon // Don't use shadow from the shadow plugin because we don't want IDEA to index this.
+    shadowCommon
     compileClasspath.extendsFrom common
     runtimeClasspath.extendsFrom common
-    developmentFabric.extendsFrom common
+    developmentForge.extendsFrom common
+}
+
+repositories {
+    maven { url "https://cursemaven.com" }
 }
 
 dependencies {
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modApi "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    forge "net.minecraftforge:forge:${rootProject.forge_version}"
 
     common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
 
-    // Mod Menu integration (optional)
-    modCompileOnly "com.terraformersmc:modmenu:${modmenu_version}"
+    compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${rootProject.mixin_extras_version}"))
+    implementation(include("io.github.llamalad7:mixinextras-forge:${rootProject.mixin_extras_version}"))
 }
 
-// Custom jar naming: stormiespiders-fabric-1.20.4-3.0.0.jar
-archivesBaseName = "${rootProject.mod_id}-fabric-${rootProject.minecraft_version}"
+archivesBaseName = "${rootProject.mod_id}-forge-${rootProject.minecraft_version}"
 version = rootProject.version
 
 processResources {
     inputs.property "version", project.version
+    inputs.property "mod_id", project.mod_id
+    inputs.property "mod_name", project.mod_name
+    inputs.property "mod_author", project.mod_author
+    inputs.property "license", project.license
+    inputs.property "credits", project.credits
+    inputs.property "description", project.description
+    inputs.property "forge_version", project.forge_version
+    inputs.property "minecraft_version_range", project.minecraft_version_range
 
-    filesMatching("fabric.mod.json") {
+    filesMatching("META-INF/mods.toml") {
         expand "version": project.version,
                "mod_id": project.mod_id,
                "mod_name": project.mod_name,
                "mod_author": project.mod_author,
-               "description": project.description,
                "license": project.license,
-               "fabric_loader_version": project.fabric_loader_version,
-               "minecraft_version": project.minecraft_version,
-               "java_version": project.java_version
+               "credits": project.credits,
+               "description": project.description,
+               "forge_version": project.forge_version,
+               "minecraft_version_range": project.minecraft_version_range
     }
 }
 
@@ -64,8 +75,8 @@ shadowJar {
 }
 
 remapJar {
-    injectAccessWidener = true
     input.set shadowJar.archiveFile
+    atAccessWideners.add loom.accessWidenerPath.get().asFile.name
     dependsOn shadowJar
     archiveClassifier = null
 }
@@ -88,13 +99,9 @@ components.java {
 
 publishing {
     publications {
-        mavenFabric(MavenPublication) {
+        mavenForge(MavenPublication) {
             artifactId = rootProject.mod_id + "-" + project.name
             from components.java
         }
-    }
-
-    repositories {
-        // Add repositories to publish to here
     }
 }

@@ -30,4 +30,4 @@ pluginManagement {
 rootProject.name = 'StormiesSpiders'
 include("common")
 include("fabric")
-include("neoforge")
+include("forge")

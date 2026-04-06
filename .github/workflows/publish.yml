@@ -15,10 +15,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Build with Gradle
@@ -46,16 +46,16 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-file: CHANGELOG.md
 
-      - name: Publish NeoForge
+      - name: Publish Forge
         uses: Kir-Antipov/mc-publish@v3.3
         with:
           modrinth-id: 3dsI6Hle
           modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
           curseforge-id: 1395945
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
-          version: ${{ steps.version.outputs.mod_version }}-neoforge
-          name: ${{ steps.version.outputs.mod_name }} (NeoForge ${{ steps.version.outputs.minecraft_version }}-${{ steps.version.outputs.mod_version }})
-          files: neoforge/build/libs/!(*-@(sources|javadoc|dev|shadow)).jar
-          loaders: neoforge
+          version: ${{ steps.version.outputs.mod_version }}-forge
+          name: ${{ steps.version.outputs.mod_name }} (Forge ${{ steps.version.outputs.minecraft_version }}-${{ steps.version.outputs.mod_version }})
+          files: forge/build/libs/!(*-@(sources|javadoc|dev|shadow)).jar
+          loaders: forge
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-file: CHANGELOG.md

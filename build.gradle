@@ -3,8 +3,6 @@ plugins {
     id "architectury-plugin" version "${architectury_plugin_version}"
     // Loom plugin for Minecraft modding (applied to subprojects)
     id "dev.architectury.loom" version "${loom_version}" apply false
-    // Required for NeoGradle
-    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.7"
 }
 
 // Tell Architectury which Minecraft version we're targeting
@@ -12,10 +10,9 @@ architectury {
     minecraft = rootProject.minecraft_version
 }
 
-// Configure all subprojects (common/, fabric/, neoforge/)
+// Configure all subprojects (common/, fabric/, forge/)
 subprojects {
     apply plugin: "java"
-    apply plugin: "architectury-plugin"
     apply plugin: "dev.architectury.loom"
 
     loom {
@@ -29,15 +26,11 @@ subprojects {
             url = 'https://maven.parchmentmc.org'
         }
         maven { url "https://maven.fabricmc.net/" }
+        maven { url "https://maven.minecraftforge.net/" }
         // Terraformers maven for ModMenu
         maven {
             name = "TerraformersMC"
             url = "https://maven.terraformersmc.com/"
-        }
-        // Fuzs Mod Resources for Forge Config API Port
-        maven {
-            name = "Fuzs Mod Resources"
-            url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
         }
         // Maven Central for Night Config dependencies
         mavenCentral()
@@ -55,17 +48,17 @@ subprojects {
         modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     }
 
-    // Configure Java toolchain to use JDK 21 for the build
+    // Configure Java toolchain to use JDK 17 for the build
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
 
-    // Ensure all Java compilation uses UTF-8 encoding and produces Java 21 bytecode
+    // Ensure all Java compilation uses UTF-8 encoding and produces Java 17 bytecode
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 17
     }
 
     // Generate sources JAR for all subprojects (helpful for debugging)
@@ -83,15 +76,29 @@ tasks.register('collectProductionJars', Copy) {
     def outputDir = layout.buildDirectory.dir("dist")
     into outputDir
 
-    // Collect production JARs from each loader module
-    from("fabric/build/libs") {
-        include "*-fabric-*.jar"
-        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+    // Read enabled platforms from gradle.properties
+    def enabledPlatforms = (project.findProperty('enabled_platforms') ?: 'fabric,neoforge').split(',')
+
+    // Conditionally collect JARs based on enabled platforms
+    if ('fabric' in enabledPlatforms) {
+        from("fabric/build/libs") {
+            include "*-fabric-*.jar"
+            exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+        }
     }
 
-    from("neoforge/build/libs") {
-        include "*-neoforge-*.jar"
-        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+    if ('forge' in enabledPlatforms) {
+        from("forge/build/libs") {
+            include "*-forge-*.jar"
+            exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+        }
+    }
+
+    if ('neoforge' in enabledPlatforms) {
+        from("neoforge/build/libs") {
+            include "*-neoforge-*.jar"
+            exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+        }
     }
 
     // Only copy files that exist
@@ -116,13 +123,23 @@ collectProductionJars.dependsOn {
     tasks.matching { task -> task.name == "remapJar" || task.name == "jar" }
 }
 
-// Also collect after each loader module builds
-project(":fabric").build.finalizedBy(collectProductionJars)
-project(":neoforge").build.finalizedBy(collectProductionJars)
+// Also collect after each enabled loader module builds
+def enabledPlatforms = (project.findProperty('enabled_platforms') ?: 'fabric,neoforge').split(',')
+
+if ('fabric' in enabledPlatforms) {
+    project(":fabric").build.finalizedBy(collectProductionJars)
+}
+if ('forge' in enabledPlatforms) {
+    project(":forge").build.finalizedBy(collectProductionJars)
+}
+if ('neoforge' in enabledPlatforms) {
+    project(":neoforge").build.finalizedBy(collectProductionJars)
+}
 
 // Configure all projects (root + subprojects)
 allprojects {
     apply plugin: "java"
+    apply plugin: "architectury-plugin"
     apply plugin: "maven-publish"
 
     // Set consistent project metadata across all loaders
@@ -131,17 +148,17 @@ allprojects {
     version = rootProject.version
     group = rootProject.group
 
-    // Configure Java toolchain to use JDK 21 for the build
+    // Configure Java toolchain to use JDK 17 for the build
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
+            languageVersion = JavaLanguageVersion.of(17)
         }
     }
 
     // Consistent Java compilation settings
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 17
     }
 
     // Generate sources for all projects
@@ -149,5 +166,3 @@ allprojects {
         withSourcesJar()
     }
 }
-
-
