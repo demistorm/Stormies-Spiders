@@ -26,5 +26,9 @@ public class Config {
         public static boolean canSwim() {
             return ModConfig.Data.canSwim();
         }
+
+        public static boolean reducedAttackRange() {
+            return ModConfig.Data.reducedAttackRange();
+        }
     }
 }
