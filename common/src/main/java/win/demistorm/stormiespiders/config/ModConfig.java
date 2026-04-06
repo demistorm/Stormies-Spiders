@@ -18,6 +18,7 @@ public final class ModConfig {
     private static boolean canCrawlOnCeiling = true;
     private static boolean enableFallbackRotation = true;
     private static int fallbackUpdateInterval = 1;
+    private static boolean canSwim = true;
 
     // Data structure matching the JSON format
     public static final class ConfigData {
@@ -29,6 +30,7 @@ public final class ModConfig {
             public boolean can_crawl_on_ceiling = true;
             public boolean enable_fallback_rotation = true;
             public int fallback_update_interval = 1;
+            public boolean can_swim = true;
         }
     }
 
@@ -62,6 +64,15 @@ public final class ModConfig {
         public static int fallbackUpdateInterval() {
             return fallbackUpdateInterval;
         }
+
+        public static boolean canSwim() {
+            return canSwim;
+        }
+
+        public static void setCanSwim(boolean value) {
+            canSwim = value;
+            save();
+        }
     }
 
     public static void load() {
@@ -93,7 +104,10 @@ public final class ModConfig {
                 canCrawlOnCeiling = data.general.can_crawl_on_ceiling;
                 enableFallbackRotation = data.general.enable_fallback_rotation;
                 fallbackUpdateInterval = data.general.fallback_update_interval;
+                canSwim = data.general.can_swim;
             }
+
+            save();
 
         } catch (IOException e) {
             Constants.LOG.error("Failed to load config, using defaults", e);
@@ -103,6 +117,7 @@ public final class ModConfig {
             canCrawlOnCeiling = true;
             enableFallbackRotation = true;
             fallbackUpdateInterval = 1;
+            canSwim = true;
         }
     }
 
@@ -120,6 +135,7 @@ public final class ModConfig {
             data.general.can_crawl_on_ceiling = canCrawlOnCeiling;
             data.general.enable_fallback_rotation = enableFallbackRotation;
             data.general.fallback_update_interval = fallbackUpdateInterval;
+            data.general.can_swim = canSwim;
 
             Files.writeString(CONFIG_FILE, GSON.toJson(data));
 

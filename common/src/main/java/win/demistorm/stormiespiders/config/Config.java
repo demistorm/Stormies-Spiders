@@ -22,5 +22,9 @@ public class Config {
         public static int fallbackUpdateInterval() {
             return ModConfig.Data.fallbackUpdateInterval();
         }
+
+        public static boolean canSwim() {
+            return ModConfig.Data.canSwim();
+        }
     }
 }
