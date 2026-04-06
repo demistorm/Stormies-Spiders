@@ -8,7 +8,8 @@
     "ClimberEntityMixin",
     "EntityMixin",
     "LivingEntityMixin",
-    "MobEntityMixin"
+    "MobEntityMixin",
+    "SpiderEntityAttackRangeMixin"
   ],
   "client": [
     "MixinLivingRenderer",

@@ -19,6 +19,7 @@ public final class ModConfig {
     private static boolean enableFallbackRotation = true;
     private static int fallbackUpdateInterval = 1;
     private static boolean canSwim = true;
+    private static boolean reducedAttackRange = true;
 
     // Data structure matching the JSON format
     public static final class ConfigData {
@@ -31,6 +32,7 @@ public final class ModConfig {
             public boolean enable_fallback_rotation = true;
             public int fallback_update_interval = 1;
             public boolean can_swim = true;
+            public boolean reduced_attack_range = true;
         }
     }
 
@@ -73,6 +75,15 @@ public final class ModConfig {
             canSwim = value;
             save();
         }
+
+        public static boolean reducedAttackRange() {
+            return reducedAttackRange;
+        }
+
+        public static void setReducedAttackRange(boolean value) {
+            reducedAttackRange = value;
+            save();
+        }
     }
 
     public static void load() {
@@ -105,6 +116,7 @@ public final class ModConfig {
                 enableFallbackRotation = data.general.enable_fallback_rotation;
                 fallbackUpdateInterval = data.general.fallback_update_interval;
                 canSwim = data.general.can_swim;
+                reducedAttackRange = data.general.reduced_attack_range;
             }
 
             save();
@@ -118,6 +130,7 @@ public final class ModConfig {
             enableFallbackRotation = true;
             fallbackUpdateInterval = 1;
             canSwim = true;
+            reducedAttackRange = true;
         }
     }
 
@@ -136,6 +149,7 @@ public final class ModConfig {
             data.general.enable_fallback_rotation = enableFallbackRotation;
             data.general.fallback_update_interval = fallbackUpdateInterval;
             data.general.can_swim = canSwim;
+            data.general.reduced_attack_range = reducedAttackRange;
 
             Files.writeString(CONFIG_FILE, GSON.toJson(data));
 
