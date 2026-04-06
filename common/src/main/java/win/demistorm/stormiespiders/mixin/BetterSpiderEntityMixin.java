@@ -4,6 +4,7 @@ import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.common.ModTags;
 import win.demistorm.stormiespiders.common.entity.goal.BetterLeapAtTargetGoal;
+import win.demistorm.stormiespiders.common.entity.goal.WaterEscapeGoal;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityRegisterGoalsHook;
 import net.minecraft.core.BlockPos;
@@ -48,6 +49,11 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 		this.getAttribute(Attributes.FOLLOW_RANGE).addPermanentModifier(FOLLOW_RANGE_INCREASE);
 	}
 
+	@Override
+	public void onRegisterGoals() {
+		this.goalSelector.addGoal(1, new WaterEscapeGoal<>(this));
+	}
+
 	@Redirect(method = "registerGoals()V", at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V"
@@ -87,6 +93,13 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 
 	@Override
 	public float getPathingMalus(BlockGetter cache, Mob entity, PathType nodeType, BlockPos pos, Vec3i direction, Predicate<Direction> sides) {
+		// Avoid water when not already in it
+		if(!this.isInWater()) {
+			if(nodeType == PathType.WATER || nodeType == PathType.WATER_BORDER) {
+				return -1.0f;
+			}
+		}
+
 		// Check all pathable surface blocks
 		BlockPos.MutableBlockPos offsetPos = new BlockPos.MutableBlockPos();
 
