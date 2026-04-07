@@ -9,8 +9,8 @@ version = "${version}" #mandatory
 displayName = "${mod_name}" #mandatory
 displayURL = "https://modrinth.com/mod/stormies-spiders"
 logoFile="${mod_id}.png"
-credits="${credits}"
 authors = "${mod_author}"
+credits="${credits}"
 description = '''
 ${description}
 
@@ -31,5 +31,5 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "minecraft"
 type = "required"
-versionRange = "${minecraft_version_range}"
+versionRange = "[${minecraft_version}]"
 side = "BOTH"

@@ -128,8 +128,8 @@ allprojects {
     // Set consistent project metadata across all loaders
     // Custom jar naming will be handled in individual subprojects
     archivesBaseName = rootProject.mod_id
-    version = rootProject.version
-    group = rootProject.group
+    version = rootProject.mod_version
+    group = rootProject.maven_group
 
     // Configure Java toolchain to use JDK 21 for the build
     java {
