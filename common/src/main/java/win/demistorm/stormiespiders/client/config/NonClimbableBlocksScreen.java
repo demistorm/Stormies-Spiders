@@ -25,6 +25,7 @@ public class NonClimbableBlocksScreen extends Screen {
 	private BlockListWidget blockList;
 
 	// Layout
+	private int topY;
 	private int listTopY;
 
 	// Data
@@ -40,9 +41,9 @@ public class NonClimbableBlocksScreen extends Screen {
 
 	@Override
 	protected void init() {
-		int topY = 40;
-		int listTopY = topY + 80;
-		int bottomMargin = 70; // Space at bottom for Done button
+		topY = 55;
+		listTopY = topY + 45;
+		int bottomMargin = 47;
 
 		// Text input for new blocks (left side)
 		blockIdInput = new EditBox(
@@ -104,7 +105,7 @@ public class NonClimbableBlocksScreen extends Screen {
 			Button.builder(
 				Component.literal("Done"),
 				btn -> client.setScreen(parent))
-			.bounds(width / 2 - 50, height - 50, 100, 20)
+			.bounds(width / 2 - 100, height - 27, 200, 20)
 			.build());
 	}
 
@@ -133,27 +134,19 @@ public class NonClimbableBlocksScreen extends Screen {
 		// Render all widgets (buttons, text input)
 		super.render(context, mouseX, mouseY, delta);
 
-		// Render the block list
-		if (blockList != null) {
+        if (blockList != null) {
 			blockList.render(context, mouseX, mouseY, delta);
 		}
 
-		// Title at top
-		context.drawCenteredString(font, title, width / 2, 10, 0xFFFFFF);
+		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
+		context.drawString(font, "Add Block ID or Wildcard:", 20, topY - 12, 0xFFFFFF);
+		context.drawString(font, "Non-Climbable Blocks:", 20, listTopY - 12, 0xFFFFFF);
+		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 12, 0xAAAAAA);
 
-		// Label for text input
-		context.drawString(font, "Add Block ID or Wildcard:", 20, 28, 0xFFFFFF);
-
-		// Label for block list
-		context.drawString(font, "Non-Climbable Blocks:", 20, listTopY - 10, 0xFFFFFF);
-
-		// Show count of blocks
-		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 10, 0xAAAAAA);
-
-		// Instructions at bottom
-		String instructions = "Wildcards: *trapdoor matches all trapdoors, *door* matches anything with 'door'";
-		context.drawCenteredString(font, instructions, width / 2, height - 75, 0x808080);
-	}
+        // Instructions at bottom
+        String instructions = "Wildcards: *trapdoor matches all trapdoors, *door* matches anything with 'door'";
+        context.drawCenteredString(font, instructions, width / 2, height - 75, 0x808080);
+    }
 
 	@Override
 	public boolean keyPressed(KeyEvent event) {
