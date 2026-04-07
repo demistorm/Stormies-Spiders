@@ -37,7 +37,7 @@ dependencies {
 
 // Custom jar naming: stormiespiders-neoforge-1.20.4-3.0.0.jar
 archivesBaseName = "${rootProject.mod_id}-neoforge-${rootProject.minecraft_version}"
-version = rootProject.version
+version = rootProject.mod_version
 
 processResources {
     inputs.property "version", project.version
@@ -48,7 +48,7 @@ processResources {
     inputs.property "credits", project.credits
     inputs.property "description", project.description
     inputs.property "neoforge_loader_version_range", project.neoforge_loader_version_range
-    inputs.property "minecraft_version_range", project.minecraft_version_range
+    inputs.property "minecraft_version", project.minecraft_version
 
     filesMatching("META-INF/neoforge.mods.toml") {
         expand "version": project.version,
@@ -59,7 +59,7 @@ processResources {
                "credits": project.credits,
                "description": project.description,
                "neoforge_loader_version_range": project.neoforge_loader_version_range,
-               "minecraft_version_range": project.minecraft_version_range
+               "minecraft_version": project.minecraft_version
     }
 }
 

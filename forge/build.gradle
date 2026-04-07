@@ -41,7 +41,7 @@ dependencies {
 }
 
 archivesBaseName = "${rootProject.mod_id}-forge-${rootProject.minecraft_version}"
-version = rootProject.version
+version = rootProject.mod_version
 
 processResources {
     inputs.property "version", project.version
@@ -52,7 +52,7 @@ processResources {
     inputs.property "credits", project.credits
     inputs.property "description", project.description
     inputs.property "forge_version", project.forge_version
-    inputs.property "minecraft_version_range", project.minecraft_version_range
+    inputs.property "minecraft_version", project.minecraft_version
 
     filesMatching("META-INF/mods.toml") {
         expand "version": project.version,
@@ -63,7 +63,7 @@ processResources {
                "credits": project.credits,
                "description": project.description,
                "forge_version": project.forge_version,
-               "minecraft_version_range": project.minecraft_version_range
+               "minecraft_version": project.minecraft_version
     }
 }
 
