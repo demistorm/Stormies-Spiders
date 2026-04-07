@@ -1305,7 +1305,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 						jumpVector = jumpVector.add(up.scale(0.4D));
 
 						this.setDeltaMovement(jumpVector);
-						this.hasImpulse = true;
+						this.needsSync = true;
 
 						float rx = (float) orientation.localZ.dot(jumpVector);
 						float ry = (float) orientation.localX.dot(jumpVector);
