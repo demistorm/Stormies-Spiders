@@ -138,14 +138,14 @@ public class NonClimbableBlocksScreen extends Screen {
 			blockList.render(context, mouseX, mouseY, delta);
 		}
 
-		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
-		context.drawString(font, "Add Block ID or Wildcard:", 20, topY - 12, 0xFFFFFF);
-		context.drawString(font, "Non-Climbable Blocks:", 20, listTopY - 12, 0xFFFFFF);
-		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 12, 0xAAAAAA);
+		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFFFF);
+		context.drawString(font, "Add Block ID or Wildcard:", 20, topY - 12, 0xFFFFFFFF);
+		context.drawString(font, "Non-Climbable Blocks:", 20, listTopY - 12, 0xFFFFFFFF);
+		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 12, 0xFFAAAAAA);
 
         // Instructions at bottom
         String instructions = "Wildcards: *trapdoor matches all trapdoors, *door* matches anything with 'door'";
-        context.drawCenteredString(font, instructions, width / 2, height - 75, 0x808080);
+        context.drawCenteredString(font, instructions, width / 2, height - 75, 0xFF808080);
     }
 
 	@Override
