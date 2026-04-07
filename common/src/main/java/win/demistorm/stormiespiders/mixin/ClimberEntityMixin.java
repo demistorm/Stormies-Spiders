@@ -1197,6 +1197,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 		this.move(MoverType.SELF, motion);
 
+		// Inline move processing (also in onMove hook) for compat when mods cancel Entity.move() early
+		this.setOnGround(this.horizontalCollision || this.verticalCollision);
+		if(Math.abs(this.getY() - py - motion.y) > 0.000001D) {
+			this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0, 1));
+		}
+
 		this.prevAttachedSides = this.attachedSides;
 		this.attachedSides = new Vec3(Math.abs(this.getX() - px - motion.x) > 0.001D ? -Math.signum(motion.x) : 0, Math.abs(this.getY() - py - motion.y) > 0.001D ? -Math.signum(motion.y) : 0, Math.abs(this.getZ() - pz - motion.z) > 0.001D ? -Math.signum(motion.z) : 0);
 
