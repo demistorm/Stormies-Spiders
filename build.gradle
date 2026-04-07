@@ -1,10 +1,8 @@
 plugins {
     // Architectury plugin for multi-loader builds
     id "architectury-plugin" version "${architectury_plugin_version}"
-    // Loom plugin for Minecraft modding (applied to subprojects)
-    id "dev.architectury.loom" version "${loom_version}" apply false
-    // Required for NeoGradle
-    id "org.jetbrains.gradle.plugin.idea-ext" version "1.1.7"
+    // Loom-no-remap plugin for Minecraft modding (applied to subprojects)
+    id "dev.architectury.loom-no-remap" version "${loom_version}" apply false
 }
 
 // Tell Architectury which Minecraft version we're targeting
@@ -15,20 +13,9 @@ architectury {
 // Configure all subprojects (common/, fabric/, neoforge/)
 subprojects {
     apply plugin: "java"
-    apply plugin: "architectury-plugin"
-    apply plugin: "dev.architectury.loom"
-
-    loom {
-        silentMojangMappingsLicense()
-    }
+    apply plugin: "dev.architectury.loom-no-remap"
 
     repositories {
-        // ParchmentMC for mappings
-        maven {
-            name = 'ParchmentMC'
-            url = 'https://maven.parchmentmc.org'
-        }
-        maven { url "https://maven.fabricmc.net/" }
         // Terraformers maven for ModMenu
         maven {
             name = "TerraformersMC"
@@ -45,29 +32,16 @@ subprojects {
 
     dependencies {
         minecraft "com.mojang:minecraft:${rootProject.minecraft_version}"
-        mappings loom.layered() {
-            officialMojangMappings()
-
-            // 1.21.11 mappings have not been published yet
-            // parchment("org.parchmentmc.data:parchment-${rootProject.parchment_version}")
-        }
         // Depend on Fabric loader here to use the fabric @Environment annotations
         // This is needed for client-side code separation across all loaders
         // Do NOT use other Fabric classes in common code
-        modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
+        implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
     }
 
-    // Configure Java toolchain to use JDK 21 for the build
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
-
-    // Ensure all Java compilation uses UTF-8 encoding and produces Java 21 bytecode
+    // Ensure all Java compilation uses UTF-8 encoding and produces Java 25 bytecode
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 25
     }
 
     // Generate sources JAR for all subprojects (helpful for debugging)
@@ -88,12 +62,12 @@ tasks.register('collectProductionJars', Copy) {
     // Collect production JARs from each loader module
     from("fabric/build/libs") {
         include "*-fabric-*.jar"
-        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+        exclude "*-raw.jar", "*-dev-shadow.jar", "*-sources.jar"
     }
 
     from("neoforge/build/libs") {
         include "*-neoforge-*.jar"
-        exclude "*-dev.jar", "*-dev-shadow.jar", "*-sources.jar"
+        exclude "*-raw.jar", "*-dev-shadow.jar", "*-sources.jar"
     }
 
     // Only copy files that exist
@@ -115,7 +89,7 @@ tasks.register('collectProductionJars', Copy) {
 
 // Make sure JARs are built before collecting
 collectProductionJars.dependsOn {
-    tasks.matching { task -> task.name == "remapJar" || task.name == "jar" }
+    tasks.matching { task -> task.name == "shadowJar" || task.name == "jar" }
 }
 
 // Also collect after each loader module builds
@@ -125,25 +99,21 @@ project(":neoforge").build.finalizedBy(collectProductionJars)
 // Configure all projects (root + subprojects)
 allprojects {
     apply plugin: "java"
+    apply plugin: "architectury-plugin"
     apply plugin: "maven-publish"
 
     // Set consistent project metadata across all loaders
     // Custom jar naming will be handled in individual subprojects
-    archivesBaseName = rootProject.mod_id
+    base {
+        archivesName = rootProject.mod_id
+    }
     version = rootProject.mod_version
     group = rootProject.maven_group
-
-    // Configure Java toolchain to use JDK 21 for the build
-    java {
-        toolchain {
-            languageVersion = JavaLanguageVersion.of(21)
-        }
-    }
 
     // Consistent Java compilation settings
     tasks.withType(JavaCompile).configureEach {
         options.encoding = "UTF-8"
-        options.release = 21
+        options.release = 25
     }
 
     // Generate sources for all projects
@@ -151,5 +121,3 @@ allprojects {
         withSourcesJar()
     }
 }
-
-

@@ -4,30 +4,17 @@ architectury {
     common(rootProject.enabled_platforms.split(","))
 }
 
-// Loom configuration for the common module
 loom {
     def aw = file("src/main/resources/${mod_id}.accesswidener")
     if (aw.exists()) {
         accessWidenerPath.set(aw)
     }
-
-    // Custom refmap name to avoid -common suffix
-    // This sets the output refmap file name for the common module
-    mixin {
-        defaultRefmapName.set("${mod_id}-refmap.json")
-    }
-}
-
-repositories {
-    maven { url "https://maven.fabricmc.net/" }
 }
 
 dependencies {
     // We depend on fabric loader here to use the fabric @Environment annotations and get the mixin dependencies
     // Do NOT use other classes from fabric loader
-    modImplementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
-
-    // Mixin dependencies are provided by Fabric Loader automatically (like ImmersiveMC)
+    implementation "net.fabricmc:fabric-loader:${rootProject.fabric_loader_version}"
 }
 
 // Publishing configuration for the common module
