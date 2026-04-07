@@ -26,15 +26,16 @@
             "win.demistorm.stormiespiders.fabric.FabricConfigScreen"
         ]
     },
-    "mixins": [
-        "${mod_id}.mixins.json"
-    ],
     "depends": {
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "${minecraft_version}",
-        "java": ">=${java_version}"
+        "java": ">=21"
     },
+    "mixins": [
+        "${mod_id}.mixins.json"
+    ],
+    "accessWidener": "${mod_id}.accesswidener",
     "suggests": {
         "modmenu": "*"
     },
@@ -45,7 +46,5 @@
                 "modmenu.kofi": "https://ko-fi.com/hstorm"
             }
         }
-    },
-    "accessWidener": "${mod_id}.accesswidener"
+    }
 }
-  
