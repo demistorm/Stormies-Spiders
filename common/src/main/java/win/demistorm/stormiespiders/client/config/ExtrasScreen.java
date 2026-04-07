@@ -1,7 +1,7 @@
 package win.demistorm.stormiespiders.client.config;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.components.Button;
@@ -73,10 +73,9 @@ public final class ExtrasScreen {
         }
 
         @Override
-        public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-            renderBackground(context, mouseX, mouseY, delta);
-            super.render(context, mouseX, mouseY, delta);
-            context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
+        public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+            super.extractRenderState(context, mouseX, mouseY, delta);
+            context.centeredText(font, title, width / 2, 20, 0xFFFFFF);
         }
     }
 }

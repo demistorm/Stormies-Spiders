@@ -1,7 +1,7 @@
 package win.demistorm.stormiespiders.client.config;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
@@ -130,22 +130,22 @@ public class NonClimbableBlocksScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
 		// Render all widgets (buttons, text input)
-		super.render(context, mouseX, mouseY, delta);
+		super.extractRenderState(context, mouseX, mouseY, delta);
 
         if (blockList != null) {
-			blockList.render(context, mouseX, mouseY, delta);
+			blockList.extractRenderState(context, mouseX, mouseY, delta);
 		}
 
-		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
-		context.drawString(font, "Add Block ID or Wildcard:", 20, topY - 12, 0xFFFFFF);
-		context.drawString(font, "Non-Climbable Blocks:", 20, listTopY - 12, 0xFFFFFF);
-		context.drawString(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 12, 0xAAAAAA);
+		context.centeredText(font, title, width / 2, 20, 0xFFFFFF);
+		context.text(font, "Add Block ID or Wildcard:", 20, topY - 12, 0xFFFFFF);
+		context.text(font, "Non-Climbable Blocks:", 20, listTopY - 12, 0xFFFFFF);
+		context.text(font, "(" + nonClimbableBlocks.size() + " entries)", 160, listTopY - 12, 0xAAAAAA);
 
         // Instructions at bottom
         String instructions = "Wildcards: *trapdoor matches all trapdoors, *door* matches anything with 'door'";
-        context.drawCenteredString(font, instructions, width / 2, height - 75, 0x808080);
+        context.centeredText(font, instructions, width / 2, height - 75, 0x808080);
     }
 
 	@Override
@@ -209,7 +209,7 @@ public class NonClimbableBlocksScreen extends Screen {
 			}
 
 			@Override
-			public void renderContent(GuiGraphics context, int mouseX, int mouseY, boolean isHovering, float delta) {
+			public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean isHoverings, float delta) {
 				// Get entry position (not content position - match VR Throwing Extensions pattern)
 				int x = this.getX();
 				int y = this.getY();
@@ -220,16 +220,16 @@ public class NonClimbableBlocksScreen extends Screen {
 
 				// Position and render left remove button
 				leftRemoveButton.setPosition(x + columnWidth - 20, y + 6);
-				leftRemoveButton.render(context, mouseX, mouseY, delta);
+				leftRemoveButton.extractRenderState(context, mouseX, mouseY, delta);
 
 				// Left column
-				context.drawString(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 9, 0xFFFFFFFF);
+				context.text(font, Component.literal(leftBlock).withStyle(style -> style.withUnderlined(true)), x + 5, y + 9, 0xFFFFFFFF);
 
 				// Right column
 				if (rightBlock != null) {
 					rightRemoveButton.setPosition(x + width - 20, y + 6);
-					rightRemoveButton.render(context, mouseX, mouseY, delta);
-					context.drawString(font, Component.literal(rightBlock).withStyle(style -> style.withUnderlined(true)), x + columnWidth + 5, y + 9, 0xFFFFFFFF);
+					rightRemoveButton.extractRenderState(context, mouseX, mouseY, delta);
+					context.text(font, Component.literal(rightBlock).withStyle(style -> style.withUnderlined(true)), x + columnWidth + 5, y + 9, 0xFFFFFFFF);
 				}
 			}
 

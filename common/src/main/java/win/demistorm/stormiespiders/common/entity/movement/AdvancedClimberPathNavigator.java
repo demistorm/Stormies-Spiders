@@ -468,7 +468,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                             return false;
                         }
 
-                        if (nodeType == PathType.DAMAGE_FIRE || nodeType == PathType.DANGER_FIRE || nodeType == PathType.DAMAGE_OTHER) {
+                        if (nodeType == PathType.FIRE || nodeType == PathType.FIRE_IN_NEIGHBOR || nodeType == PathType.DAMAGING) {
                             return false;
                         }
                     }

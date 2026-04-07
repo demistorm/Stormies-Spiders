@@ -13,8 +13,8 @@ import win.demistorm.stormiespiders.config.Config;
 public abstract class SpiderEntityAttackRangeMixin {
 
     @WrapOperation(method = "isWithinMeleeAttackRange", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;getAttackBoundingBox(D)Lnet/minecraft/world/phys/AABB;"))
-    private AABB stormiespiders$reduceAttackRange(Mob instance, double range, Operation<AABB> original) {
-        AABB attackBox = original.call(instance, range);
+    private AABB stormiespiders$reduceAttackRange(Mob instance, double horizontalExpansion, Operation<AABB> original) {
+        AABB attackBox = original.call(instance, horizontalExpansion);
         if (instance instanceof Spider && Config.COMMON.reducedAttackRange()) {
             attackBox = attackBox.inflate(-0.4, 0, -0.4);
         }

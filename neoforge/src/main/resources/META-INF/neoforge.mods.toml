@@ -1,5 +1,5 @@
 modLoader = "javafml"
-loaderVersion = "${neoforge_loader_version_range}"
+loaderVersion = "[1,)"
 issueTrackerURL = "https://github.com/demistorm/stormies-spiders/issues"
 license = "${license}"
 
