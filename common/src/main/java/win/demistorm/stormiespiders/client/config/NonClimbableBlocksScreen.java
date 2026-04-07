@@ -12,7 +12,6 @@ import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 
-import java.util.ArrayList;
 import java.util.List;
 
 // Screen for managing non-climbable blocks

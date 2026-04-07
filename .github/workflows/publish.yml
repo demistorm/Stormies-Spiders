@@ -41,7 +41,7 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           version: ${{ steps.version.outputs.mod_version }}-fabric
           name: ${{ steps.version.outputs.mod_name }} (Fabric ${{ steps.version.outputs.minecraft_version }}-${{ steps.version.outputs.mod_version }})
-          files: fabric/build/libs/!(*-@(sources|javadoc|dev|shadow)).jar
+          files: fabric/build/libs/!(*-@(sources|javadoc|dev|shadow|raw)).jar
           loaders: fabric
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-file: CHANGELOG.md
@@ -55,7 +55,7 @@ jobs:
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           version: ${{ steps.version.outputs.mod_version }}-neoforge
           name: ${{ steps.version.outputs.mod_name }} (NeoForge ${{ steps.version.outputs.minecraft_version }}-${{ steps.version.outputs.mod_version }})
-          files: neoforge/build/libs/!(*-@(sources|javadoc|dev|shadow)).jar
+          files: neoforge/build/libs/!(*-@(sources|javadoc|dev|shadow|raw)).jar
           loaders: neoforge
           github-token: ${{ secrets.GITHUB_TOKEN }}
           changelog-file: CHANGELOG.md
