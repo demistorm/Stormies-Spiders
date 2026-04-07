@@ -13,37 +13,38 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Mob.class)
 public abstract class MobEntityMixin implements IMobEntityLivingTickHook, IMobEntityTickHook, IMobEntityRegisterGoalsHook {
-	@Inject(method = "aiStep", at = @At("HEAD"))
-	private void onLivingTick(CallbackInfo ci) {
-		this.onLivingTick();
-	}
 
-	@Override
-	public void onLivingTick() { }
+    @Inject(method = "aiStep", at = @At("HEAD"))
+    private void onLivingTick(CallbackInfo ci) {
+        this.onLivingTick();
+    }
 
-	@Inject(method = "tick()V", at = @At("RETURN"))
-	private void onTick(CallbackInfo ci) {
-		this.onTick();
-	}
+    @Override
+    public void onLivingTick() { }
 
-	@Override
-	public void onTick() { }
+    @Inject(method = "tick()V", at = @At("RETURN"))
+    private void onTick(CallbackInfo ci) {
+        this.onTick();
+    }
 
-	@Shadow(prefix = "shadow$")
-	private void shadow$registerGoals() { }
+    @Override
+    public void onTick() { }
 
-	@Redirect(method = "<init>*", at = @At(
-			value = "INVOKE",
-			target = "Lnet/minecraft/world/entity/Mob;registerGoals()V"
-			))
-	private void onRegisterGoals(Mob _this) {
-		this.shadow$registerGoals();
+    @Shadow
+    protected void registerGoals() {}
 
-		if(_this == (Object) this) {
-			this.onRegisterGoals();
-		}
-	}
+    @Redirect(method = "<init>*", at = @At(
+            value = "INVOKE",
+            target = "Lnet/minecraft/world/entity/Mob;registerGoals()V"
+    ))
+    private void onRegisterGoals(Mob _this) {
+        this.registerGoals();
 
-	@Override
-	public void onRegisterGoals() { }
+        if (_this == (Object) this) {
+            this.onRegisterGoals();
+        }
+    }
+
+    @Override
+    public void onRegisterGoals() { }
 }

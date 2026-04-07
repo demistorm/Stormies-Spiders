@@ -23,7 +23,6 @@ import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -76,7 +75,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	// Copy from LivingEntity
 	private static final UUID SLOW_FALLING_ID = UUID.fromString("A5B6CF2A-2F7C-31EF-9022-7C3E7D5E6ABA");
-	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(ResourceLocation.fromNamespaceAndPath("stormiespiders", "slow_falling"), -0.07, AttributeModifier.Operation.ADD_VALUE);
+	private static final AttributeModifier SLOW_FALLING = new AttributeModifier(SLOW_FALLING_ID, "Slow falling", -0.07, AttributeModifier.Operation.ADDITION);
 
 	
 	private static final EntityDataAccessor<Rotations> ROTATION_BODY;
@@ -184,20 +183,15 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Redirect(method = "defineSynchedData", at = @At(
 			value = "INVOKE",
-			target = "Lnet/minecraft/network/syncher/SynchedEntityData$Builder;define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;",
+			target = "Lnet/minecraft/network/syncher/SynchedEntityData;define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)V",
 			ordinal = 0
 			))
-	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
-		// Let the original call happen
-		SynchedEntityData.Builder result = builder.define(accessor, value);
-
-		// Then add custom data definitions
-		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
-		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
-		builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
-		builder.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
-
-		return result;
+	public <T> void onDefineData(SynchedEntityData data, EntityDataAccessor<T> accessor, T value) {
+		data.define(accessor, value);
+		data.define(ROTATION_BODY, new Rotations(0, 0, 0));
+		data.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+		data.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
+		data.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
 	}
 
 	@Override

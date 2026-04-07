@@ -9,7 +9,7 @@ import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.control.JumpControl;
 import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
-import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.NodeEvaluator;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
@@ -280,7 +280,11 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 		if(navigator != null) {
 			NodeEvaluator processor = navigator.getNodeEvaluator();
 
-			if(processor != null && processor.getPathType(this.mob, new BlockPos(Mth.floor(this.mob.getX() + x), Mth.floor(this.mob.getY() + this.mob.getBbHeight() * 0.5f + y), Mth.floor(this.mob.getZ() + z))) != PathType.WALKABLE) {
+			int checkX = Mth.floor(this.mob.getX() + x);
+			int checkY = Mth.floor(this.mob.getY() + this.mob.getBbHeight() * 0.5f + y);
+			int checkZ = Mth.floor(this.mob.getZ() + z);
+
+			if(processor != null && processor.getBlockPathType(this.mob.level(), checkX, checkY, checkZ, this.mob) != BlockPathTypes.WALKABLE) {
 				return false;
 			}
 		}

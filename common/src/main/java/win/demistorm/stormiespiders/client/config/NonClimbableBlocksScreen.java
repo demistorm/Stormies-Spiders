@@ -162,7 +162,7 @@ public class NonClimbableBlocksScreen extends Screen {
 	private class BlockListWidget extends ObjectSelectionList<BlockListWidget.BlockEntry> {
 
 		public BlockListWidget(Minecraft client, int width, int height, int y, int bottom) {
-			super(client, width, bottom - y, y, 20);
+			super(client, width, bottom - y, y, bottom, 20);
 		}
 
 		public void updateEntries() {

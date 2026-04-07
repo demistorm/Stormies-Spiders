@@ -103,7 +103,7 @@ public final class NonClimbableBlocksConfig {
 			// Check if it's an exact match (no wildcard)
 			if (!trimmed.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(trimmed);
+					ResourceLocation key = new ResourceLocation(trimmed);
 					if (BuiltInRegistries.BLOCK.containsKey(key)) {
 						newPatterns.add(trimmed);
 						newCache.add(key);
@@ -146,7 +146,7 @@ public final class NonClimbableBlocksConfig {
 			// Check if it's an exact match (no wildcard)
 			if (!trimmed.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(trimmed);
+					ResourceLocation key = new ResourceLocation(trimmed);
 					if (BuiltInRegistries.BLOCK.containsKey(key)) {
 						patterns.add(trimmed);
 						cache.add(key);

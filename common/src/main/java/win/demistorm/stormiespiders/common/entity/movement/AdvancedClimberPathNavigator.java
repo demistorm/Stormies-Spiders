@@ -13,7 +13,7 @@ import net.minecraft.world.entity.ai.control.MoveControl;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraft.world.level.pathfinder.PathType;
+import net.minecraft.world.level.pathfinder.BlockPathTypes;
 import net.minecraft.world.level.pathfinder.Node;
 import net.minecraft.world.level.pathfinder.Path;
 import net.minecraft.world.level.pathfinder.PathComputationType;
@@ -172,7 +172,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                 boolean isWaypointInReach = dx < this.maxDistanceToWaypoint && dy < maxDistanceToWaypointY && dz < this.maxDistanceToWaypoint;
 
                 boolean isOnSameSideAsTarget = false;
-                if (this.canFloat() && (currentTarget.type == PathType.WATER || currentTarget.type == PathType.WATER_BORDER || currentTarget.type == PathType.LAVA)) {
+                if (this.canFloat() && (currentTarget.type == BlockPathTypes.WATER || currentTarget.type == BlockPathTypes.WATER_BORDER || currentTarget.type == BlockPathTypes.LAVA)) {
                     isOnSameSideAsTarget = true;
                 } else if (currentTarget instanceof DirectionalPathPoint) {
                     Direction targetSide = ((DirectionalPathPoint) currentTarget).getPathSide();
@@ -445,17 +445,17 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                         int zBelow = unswizzle(obx, by + (invertY ? 1 : -1), obz, ax, ay, az, Direction.Axis.Z);
                         BlockPos posBelow = new BlockPos(xBelow, yBelow, zBelow);
                         if (!this.level.isLoaded(posBelow)) return false;
-                        PathType nodeTypeBelow = this.nodeEvaluator.getPathType(this.mob, posBelow);
+                        BlockPathTypes nodeTypeBelow = this.nodeEvaluator.getBlockPathType(this.level, posBelow.getX(), posBelow.getY(), posBelow.getZ(), this.mob);
 
-                        if (nodeTypeBelow == PathType.WATER) {
+                        if (nodeTypeBelow == BlockPathTypes.WATER) {
                             return false;
                         }
 
-                        if (nodeTypeBelow == PathType.LAVA) {
+                        if (nodeTypeBelow == BlockPathTypes.LAVA) {
                             return false;
                         }
 
-                        if (nodeTypeBelow == PathType.OPEN) {
+                        if (nodeTypeBelow == BlockPathTypes.OPEN) {
                             return false;
                         }
 
@@ -464,14 +464,14 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
                         int nodeZ = unswizzle(obx, by, obz, ax, ay, az, Direction.Axis.Z);
                         BlockPos pos = new BlockPos(nodeX, nodeY, nodeZ);
                         if (!this.level.isLoaded(pos)) return false;
-                        PathType nodeType = this.nodeEvaluator.getPathType(this.mob, pos);
+                        BlockPathTypes nodeType = this.nodeEvaluator.getBlockPathType(this.level, pos.getX(), pos.getY(), pos.getZ(), this.mob);
                         float f = this.mob.getPathfindingMalus(nodeType);
 
                         if (f < 0.0F || f >= 8.0F) {
                             return false;
                         }
 
-                        if (nodeType == PathType.DAMAGE_FIRE || nodeType == PathType.DANGER_FIRE || nodeType == PathType.DAMAGE_OTHER) {
+                        if (nodeType == BlockPathTypes.DAMAGE_FIRE || nodeType == BlockPathTypes.DANGER_FIRE || nodeType == BlockPathTypes.DAMAGE_OTHER) {
                             return false;
                         }
                     }
@@ -491,7 +491,7 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
             if (offsetX * dx + pffsetZ * dz >= minDotProduct) {
                 BlockState state = this.level.getBlockState(pos);
 
-                if (!state.isPathfindable(PathComputationType.LAND)) {
+                if (!state.isPathfindable(this.level, pos, PathComputationType.LAND)) {
                     return false;
                 }
             }
