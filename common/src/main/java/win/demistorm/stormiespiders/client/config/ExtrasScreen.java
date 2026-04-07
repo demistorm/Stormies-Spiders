@@ -75,7 +75,7 @@ public final class ExtrasScreen {
         @Override
         public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
             super.extractRenderState(context, mouseX, mouseY, delta);
-            context.centeredText(font, title, width / 2, 20, 0xFFFFFF);
+            context.centeredText(font, title, width / 2, 20, 0xFFFFFFFF);
         }
     }
 }
