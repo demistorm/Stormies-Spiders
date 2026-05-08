@@ -9,14 +9,18 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
+import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 
 @Mixin(Spider.class)
 public class ClientSpiderAnimationMixin {
 
     @Inject(method = "tick", at = @At("HEAD"))
     private void onTick(CallbackInfo ci) {
-        // Cast to LivingEntity to access walkAnimation
         LivingEntity entity = (LivingEntity)(Object)this;
+
+        if (RotationOverrideConfig.isClimberDisabled(entity.getType())) {
+            return;
+        }
 
         // Client side only
         if(!entity.level().isClientSide()) {

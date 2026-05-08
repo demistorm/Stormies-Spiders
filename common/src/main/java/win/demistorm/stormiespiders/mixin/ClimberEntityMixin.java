@@ -4,6 +4,7 @@ import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
+import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
 import win.demistorm.stormiespiders.common.Matrix4f;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
@@ -165,23 +166,28 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Inject(method = "<init>*", at = @At("RETURN"))
 	private void onConstructed(CallbackInfo ci) {
-		// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
 		this.orientation = this.calculateOrientation(1);
 		this.groundDirection = this.getGroundDirection();
-		this.moveControl = new ClimberMoveController<>(this);
-		this.lookControl = new ClimberLookController<>(this);
-		this.jumpControl = new ClimberJumpController<>(this);
-		// Initialize client smoothing values
 		this.targetAttachmentNormal = new Vec3(0, 1, 0);
 		this.smoothedAttachmentNormal = new Vec3(0, 1, 0);
 		this.prevSmoothedAttachmentNormal = new Vec3(0, 1, 0);
 		this.targetAttachmentOffsetY = 0.075;
 		this.smoothedOffsetY = 0.075;
 		this.prevSmoothedOffsetY = 0.075;
+
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
+		this.moveControl = new ClimberMoveController<>(this);
+		this.lookControl = new ClimberLookController<>(this);
+		this.jumpControl = new ClimberJumpController<>(this);
 	}
 
 	@Inject(method = "createNavigation", at = @At("HEAD"), cancellable = true)
 	private void onCreateNavigator(Level world, CallbackInfoReturnable<PathNavigation> ci) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		BetterSpiderPathNavigator<ClimberEntityMixin> navigate = new BetterSpiderPathNavigator<ClimberEntityMixin>(this, world, false);
 		navigate.setCanFloat(true);
 		ci.setReturnValue(navigate);
@@ -193,10 +199,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			ordinal = 0
 	))
 	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
-		// Let the original call happen
 		SynchedEntityData.Builder result = builder.define(accessor, value);
 
-		// Then add custom data definitions
 		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
 		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
 		builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
@@ -207,6 +211,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onWrite(ValueOutput output) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		output.putDouble("stormiespiders.AttachmentNormalX", this.attachmentNormal.x);
 		output.putDouble("stormiespiders.AttachmentNormalY", this.attachmentNormal.y);
 		output.putDouble("stormiespiders.AttachmentNormalZ", this.attachmentNormal.z);
@@ -216,6 +223,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onRead(ValueInput input) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		this.prevAttachmentNormal = this.attachmentNormal = new Vec3(
 				input.getDoubleOr("stormiespiders.AttachmentNormalX", 0.0),
 				input.getDoubleOr("stormiespiders.AttachmentNormalY", 1.0),
@@ -490,6 +500,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public Vec3 onLookAt(Anchor anchor, Vec3 vec) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return vec;
+		}
 		Vec3 dir = vec.subtract(this.position());
 		dir = this.getOrientation().getLocal(dir);
 		return dir;
@@ -497,6 +510,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onTick() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		if(!this.level().isClientSide() && this.level() instanceof ServerLevel) {
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
@@ -519,6 +535,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onLivingTick() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		// Client-side smoothing for interpolation and fallback generation
 		if (this.level().isClientSide()) {
 			// Check for vanilla server after initial connection
@@ -558,6 +577,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onClimbable() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return this.horizontalCollision;
+		}
 		return true;
 	}
 
@@ -883,6 +905,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public void onNotifyDataManagerChange(EntityDataAccessor<?> key) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		if (ATTACHMENT_NORMAL.equals(key)) {
 			Rotations normal = this.entityData.get(ATTACHMENT_NORMAL);
 			Vec3 newNormal = new Vec3(normal.x(), normal.y(), normal.z());
@@ -957,6 +982,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onJump() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return false;
+		}
 		this.isJumping = true;
 
 		if(this.jumpDir != null) {
@@ -987,6 +1015,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onTravel(Vec3 relative, boolean pre) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return false;
+		}
 		if(pre) {
 			boolean canTravel = this.isEffectiveAi() || this.isLocalClientAuthoritative();
 
@@ -1322,6 +1353,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onMove(MoverType type, Vec3 pos, boolean pre) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return false;
+		}
 		if(this.isInWater() && !this.canClimbInWater) {
 			return false;
 		}
@@ -1342,6 +1376,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public BlockPos getAdjustedOnPosition(BlockPos onPosition) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return onPosition;
+		}
 		float verticalOffset = this.getVerticalOffset(1);
 
 		int x = Mth.floor(this.getX() + this.attachmentOffsetX - (float) this.attachmentNormal.x * (verticalOffset + 0.2f));
@@ -1363,6 +1400,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean getAdjustedCanTriggerWalking(boolean canTriggerWalking) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return canTriggerWalking;
+		}
 		if(this.preWalkingPosition != null && this.canClimberTriggerWalking() && !this.isPassenger()) {
 			Vec3 moved = this.position().subtract(this.preWalkingPosition);
 			this.preWalkingPosition = null;
