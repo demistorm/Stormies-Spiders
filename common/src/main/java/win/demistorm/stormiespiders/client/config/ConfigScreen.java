@@ -69,12 +69,25 @@ public final class ConfigScreen {
                                     "Configure which blocks spiders cannot climb on (supports wildcards)")))
                             .build());
 
+            // Rotation Overrides button
+            addRenderableWidget(
+                    Button.builder(
+                                    Component.literal("Rotation Overrides..."),
+                                    btn -> client.setScreen(new RotationOverrideScreen(this)))
+                            .bounds(width / 2 - 80, height / 4 + 96, 160, 20)
+                            .tooltip(Tooltip.create(Component.literal(
+                                    "Configure rotation overrides and climbing behavior. " +
+                                    "ENABLED mobs use spider rotations, DISABLED spiders bypass the mod and " +
+                                    "work like vanilla. (Useful for disabling modded spiders that " +
+                                    "break with this mod and for adding rotations to mods like silverfish!)")))
+                            .build());
+
             // Extras button
             addRenderableWidget(
                     Button.builder(
                                     Component.literal("Extras..."),
                                     btn -> client.setScreen(new ExtrasScreen.ExtrasToggleScreen(this)))
-                            .bounds(width / 2 - 80, height / 4 + 96, 160, 20)
+                            .bounds(width / 2 - 80, height / 4 + 120, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
                                     "Extra configuration options")))
                             .build());

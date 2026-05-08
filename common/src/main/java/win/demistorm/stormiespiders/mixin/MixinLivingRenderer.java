@@ -2,7 +2,9 @@ package win.demistorm.stormiespiders.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import win.demistorm.stormiespiders.client.ClientEventHandlers;
+import win.demistorm.stormiespiders.client.RotationOverrideManager;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
+import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
@@ -26,8 +28,13 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
         if (entity instanceof IClimberEntity climber) {
-            // Store climber data using the renderState as a key
+            if (RotationOverrideConfig.isClimberDisabled(entity.getType())) {
+                return;
+            }
             ClientEventHandlers.storeClimberDataForRenderState(renderState, entity, climber, partialTick);
+        } else if (RotationOverrideManager.isRotationOverrideEntity(entity)) {
+            RotationOverrideManager.updateIfNeeded(entity);
+            ClientEventHandlers.storeRotationOverrideDataForRenderState(renderState, entity, partialTick);
         }
     }
 
