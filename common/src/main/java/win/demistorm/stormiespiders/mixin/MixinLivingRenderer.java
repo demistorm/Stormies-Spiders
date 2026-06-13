@@ -27,10 +27,7 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
 
     @Inject(method = "extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V", at = @At("RETURN"))
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
-        if (entity instanceof IClimberEntity climber) {
-            if (RotationOverrideConfig.isClimberDisabled(entity.getType())) {
-                return;
-            }
+        if (entity instanceof IClimberEntity climber && !RotationOverrideConfig.isClimberDisabled(entity.getType())) {
             ClientEventHandlers.storeClimberDataForRenderState(renderState, entity, climber, partialTick);
         } else if (RotationOverrideManager.isRotationOverrideEntity(entity)) {
             RotationOverrideManager.updateIfNeeded(entity);
