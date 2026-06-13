@@ -70,8 +70,8 @@ public class RotationOverrideScreen extends Screen {
 				"  *zombie* - Anything with 'zombie'\n" +
 				"  minecraft:* - All minecraft entities\n" +
 				"  Exact: minecraft:silverfish\n\n" +
-				"ENABLED: Apply rotations to this mob\n" +
-				"DISABLED: Disable climbing system for a type of spider"
+				"ROTATIONS ONLY: Apply rotations to this mob (disables mod's pathfinding/etc)\n" +
+				"DISABLED: Disable mod's features for this mob"
 			)))
 			.build());
 
@@ -139,7 +139,7 @@ public class RotationOverrideScreen extends Screen {
 		context.drawString(font, "Rotation Override Entities:", 20, listTopY - 12, 0xFFFFFFFF);
 		context.drawString(font, "(" + entityOverrides.size() + " entries)", 175, listTopY - 12, 0xFFAAAAAA);
 
-		String instructions = "ENABLED = Apply rotations | DISABLED = Disable climbing for spiders";
+		String instructions = "ROTATIONS ONLY = Apply rotations | DISABLED = Disable mod's features";
 		context.drawCenteredString(font, instructions, width / 2, height - 75, 0xFF808080);
 	}
 
@@ -181,16 +181,16 @@ public class RotationOverrideScreen extends Screen {
 				this.entityId = entityId;
 				this.enabled = enabled;
 
-				Component toggleTooltip = Component.literal(
-					"ENABLED: Apply wall rotation override\n" +
-					"DISABLED: Disable climbing system for spiders");
+			Component toggleTooltip = Component.literal(
+				"ROTATIONS ONLY: Apply rotations to this mob (disables mod's pathfinding/etc)\n" +
+				"DISABLED: Disable mod's features for this mob");
 
-				this.toggleButton = Button.builder(
-					Component.literal(enabled ? "ENABLED" : "DISABLED"),
-					btn -> toggleEntity(entityId))
-				.bounds(0, 0, 70, WIDGET_HEIGHT)
-				.tooltip(Tooltip.create(toggleTooltip))
-				.build();
+			this.toggleButton = Button.builder(
+				Component.literal(enabled ? "ROTATIONS ONLY" : "DISABLED"),
+				btn -> toggleEntity(entityId))
+			.bounds(0, 0, 95, WIDGET_HEIGHT)
+			.tooltip(Tooltip.create(toggleTooltip))
+			.build();
 
 				this.removeButton = Button.builder(
 					Component.literal("\u00d7"),
@@ -212,12 +212,12 @@ public class RotationOverrideScreen extends Screen {
 				removeButton.setPosition(removeX, removeY);
 				removeButton.render(context, mouseX, mouseY, delta);
 
-				int toggleX = removeX - 70 - 5;
-				int toggleY = y + (entryHeight - WIDGET_HEIGHT) / 2;
-				toggleButton.setPosition(toggleX, toggleY);
-				toggleButton.render(context, mouseX, mouseY, delta);
+			int toggleX = removeX - 95 - 5;
+			int toggleY = y + (entryHeight - WIDGET_HEIGHT) / 2;
+			toggleButton.setPosition(toggleX, toggleY);
+			toggleButton.render(context, mouseX, mouseY, delta);
 
-				int fixedRightWidth = 70 + 13 + 20;
+			int fixedRightWidth = 95 + 13 + 20;
 				int maxLabelWidth = entryWidth - fixedRightWidth;
 				String display = entityId;
 				if (font.width(display) > maxLabelWidth) {
@@ -241,7 +241,7 @@ public class RotationOverrideScreen extends Screen {
 
 			@Override
 			public Component getNarration() {
-				return Component.literal(entityId + " - " + (enabled ? "ENABLED" : "DISABLED"));
+				return Component.literal(entityId + " - " + (enabled ? "ROTATIONS ONLY" : "DISABLED"));
 			}
 		}
 	}
