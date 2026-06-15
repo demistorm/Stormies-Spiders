@@ -77,7 +77,7 @@ public final class ConfigScreen {
                             .bounds(width / 2 - 80, height / 4 + 96, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
                                     "Configure rotation overrides and climbing behavior. " +
-                                    "ENABLED mobs use spider rotations but without the pathfinding/etc, DISABLED spiders completely bypass the mod and " +
+                                    "ROTATIONS ONLY mobs use spider rotations but without the pathfinding/etc, DISABLED spiders completely bypass the mod and " +
                                     "work like vanilla. (Useful for disabling modded spiders that " +
                                     "break with this mod and for adding rotations to mods like silverfish!)")))
                             .build());

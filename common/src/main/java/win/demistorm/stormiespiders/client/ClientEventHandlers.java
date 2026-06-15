@@ -15,26 +15,22 @@ public class ClientEventHandlers {
 
 	public static void onPreRenderLiving(LivingEntity entity, float partialTicks, PoseStack matrixStack) {
 
-		if(entity instanceof IClimberEntity) {
-			IClimberEntity climber = (IClimberEntity) entity;
+		if(entity instanceof IClimberEntity climber && !RotationOverrideConfig.isClimberDisabled(entity.getType())) {
+			Orientation orientation = climber.getOrientation();
+			Orientation renderOrientation = climber.calculateOrientation(partialTicks);
+			climber.setRenderOrientation(renderOrientation);
 
-			if(!RotationOverrideConfig.isClimberDisabled(entity.getType())) {
-				Orientation orientation = climber.getOrientation();
-				Orientation renderOrientation = climber.calculateOrientation(partialTicks);
-				climber.setRenderOrientation(renderOrientation);
+			float verticalOffset = climber.getVerticalOffset(partialTicks);
 
-				float verticalOffset = climber.getVerticalOffset(partialTicks);
+			float x = climber.getAttachmentOffset(Direction.Axis.X, partialTicks) - (float) renderOrientation.normal.x * verticalOffset;
+			float y = climber.getAttachmentOffset(Direction.Axis.Y, partialTicks) - (float) renderOrientation.normal.y * verticalOffset;
+			float z = climber.getAttachmentOffset(Direction.Axis.Z, partialTicks) - (float) renderOrientation.normal.z * verticalOffset;
 
-				float x = climber.getAttachmentOffset(Direction.Axis.X, partialTicks) - (float) renderOrientation.normal.x * verticalOffset;
-				float y = climber.getAttachmentOffset(Direction.Axis.Y, partialTicks) - (float) renderOrientation.normal.y * verticalOffset;
-				float z = climber.getAttachmentOffset(Direction.Axis.Z, partialTicks) - (float) renderOrientation.normal.z * verticalOffset;
+			matrixStack.translate(x, y, z);
 
-				matrixStack.translate(x, y, z);
-
-				matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
-				matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
-				matrixStack.mulPose(Axis.YP.rotationDegrees((float) Math.signum(0.5f - orientation.componentY - orientation.componentZ - orientation.componentX) * renderOrientation.yaw));
-			}
+			matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
+			matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
+			matrixStack.mulPose(Axis.YP.rotationDegrees((float) Math.signum(0.5f - orientation.componentY - orientation.componentZ - orientation.componentX) * renderOrientation.yaw));
 		} else if(RotationOverrideManager.isRotationOverrideEntity(entity)) {
 			RotationOverrideManager.updateIfNeeded(entity);
 
@@ -55,26 +51,22 @@ public class ClientEventHandlers {
 
 	public static void onPostRenderLiving(LivingEntity entity, float partialTicks, PoseStack matrixStack, MultiBufferSource bufferIn) {
 
-		if(entity instanceof IClimberEntity) {
-			IClimberEntity climber = (IClimberEntity) entity;
+		if(entity instanceof IClimberEntity climber && !RotationOverrideConfig.isClimberDisabled(entity.getType())) {
+			Orientation orientation = climber.getOrientation();
+			Orientation renderOrientation = climber.getRenderOrientation();
 
-			if(!RotationOverrideConfig.isClimberDisabled(entity.getType())) {
-				Orientation orientation = climber.getOrientation();
-				Orientation renderOrientation = climber.getRenderOrientation();
+			if(renderOrientation != null) {
+				float verticalOffset = climber.getVerticalOffset(partialTicks);
 
-				if(renderOrientation != null) {
-					float verticalOffset = climber.getVerticalOffset(partialTicks);
+				float x = climber.getAttachmentOffset(Direction.Axis.X, partialTicks) - (float) renderOrientation.normal.x * verticalOffset;
+				float y = climber.getAttachmentOffset(Direction.Axis.Y, partialTicks) - (float) renderOrientation.normal.y * verticalOffset;
+				float z = climber.getAttachmentOffset(Direction.Axis.Z, partialTicks) - (float) renderOrientation.normal.z * verticalOffset;
 
-					float x = climber.getAttachmentOffset(Direction.Axis.X, partialTicks) - (float) renderOrientation.normal.x * verticalOffset;
-					float y = climber.getAttachmentOffset(Direction.Axis.Y, partialTicks) - (float) renderOrientation.normal.y * verticalOffset;
-					float z = climber.getAttachmentOffset(Direction.Axis.Z, partialTicks) - (float) renderOrientation.normal.z * verticalOffset;
+				matrixStack.mulPose(Axis.YP.rotationDegrees(-(float) Math.signum(0.5f - orientation.componentY - orientation.componentZ - orientation.componentX) * renderOrientation.yaw));
+				matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
+				matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
 
-					matrixStack.mulPose(Axis.YP.rotationDegrees(-(float) Math.signum(0.5f - orientation.componentY - orientation.componentZ - orientation.componentX) * renderOrientation.yaw));
-					matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
-					matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
-
-					matrixStack.translate(-x, -y, -z);
-				}
+				matrixStack.translate(-x, -y, -z);
 			}
 		} else if(RotationOverrideManager.isRotationOverrideEntity(entity)) {
 			Orientation renderOrientation = RotationOverrideManager.getOrientation(entity, partialTicks);
