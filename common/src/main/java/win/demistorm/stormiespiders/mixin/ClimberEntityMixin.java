@@ -199,10 +199,12 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		SynchedEntityData.Builder result = builder.define(accessor, value);
 
 		// Then add custom data definitions
-		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
-		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
-		builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
-		builder.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
+		if (!RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
+			builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));
+			builder.define(ATTACHMENT_NORMAL, new Rotations(0, 1, 0));
+			builder.define(ATTACHMENT_OFFSET, new Rotations(0, 0.075f, 0));
+		}
 
 		return result;
 	}
@@ -314,6 +316,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public int getMaxFallDistance() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return super.getMaxFallDistance();
+		}
 		return 0;
 	}
 
