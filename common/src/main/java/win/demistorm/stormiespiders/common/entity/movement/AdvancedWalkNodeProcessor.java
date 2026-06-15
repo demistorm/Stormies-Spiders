@@ -730,10 +730,9 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 								return result;
 							}
 						}
-					}
+				    }
 
-
-					boolean cancelFallDown = false;
+                    boolean cancelFallDown = false;
 					DirectionalPathPoint fallPathPoint = null;
 
 					int fallDistance = 0;
