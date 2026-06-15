@@ -576,10 +576,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean onClimbable() {
-		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
-			return this.horizontalCollision;
-		}
-		return true;
+		return this.horizontalCollision;
 	}
 
 	@Override
