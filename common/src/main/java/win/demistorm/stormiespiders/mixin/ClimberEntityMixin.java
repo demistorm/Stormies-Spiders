@@ -24,6 +24,7 @@ import net.minecraft.commands.arguments.EntityAnchorArgument.Anchor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Rotations;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -308,6 +309,9 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public int getMaxFallDistance() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return super.getMaxFallDistance();
+		}
 		return 0;
 	}
 
