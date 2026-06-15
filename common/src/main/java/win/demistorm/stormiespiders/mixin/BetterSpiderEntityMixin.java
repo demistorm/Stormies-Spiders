@@ -1,5 +1,6 @@
 package win.demistorm.stormiespiders.mixin;
 
+import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.common.ModTags;
@@ -46,11 +47,17 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 
 	@Inject(method = "<init>*", at = @At("RETURN"))
 	private void onConstructed(CallbackInfo ci) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		this.getAttribute(Attributes.FOLLOW_RANGE).addPermanentModifier(FOLLOW_RANGE_INCREASE);
 	}
 
 	@Override
 	public void onRegisterGoals() {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			return;
+		}
 		this.goalSelector.addGoal(1, new WaterEscapeGoal<>(this));
 	}
 
@@ -59,6 +66,10 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 			target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V"
 			))
 	private void onAddGoal(GoalSelector selector, int priority, Goal task) {
+		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
+			selector.addGoal(priority, task);
+			return;
+		}
 		if(task instanceof LeapAtTargetGoal) {
 			selector.addGoal(3, new BetterLeapAtTargetGoal<>(this, 0.4f));
 		} else if(task instanceof TargetGoal) {
