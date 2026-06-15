@@ -1,9 +1,6 @@
 package win.demistorm.stormiespiders.mixin;
 
-import win.demistorm.stormiespiders.config.Config;
-import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.config.RotationOverrideConfig;
-import win.demistorm.stormiespiders.common.ModTags;
 import win.demistorm.stormiespiders.common.entity.goal.BetterLeapAtTargetGoal;
 import win.demistorm.stormiespiders.common.entity.goal.WaterEscapeGoal;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
@@ -80,29 +77,6 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 	}
 
 	@Override
-	public boolean canClimbOnBlock(BlockState state, BlockPos pos) {
-		// Check if block is in non-climbable config list
-		if (NonClimbableBlocksConfig.isBlockNonClimbable(state)) {
-			return false;
-		}
-
-		return !state.is(ModTags.NON_CLIMBABLE);
-	}
-
-	@Override
-	public float getBlockSlipperiness(BlockPos pos) {
-		BlockState offsetState = this.level().getBlockState(pos);
-
-		float slipperiness = offsetState.getBlock().getFriction() * 0.91f;
-
-		if(offsetState.is(ModTags.NON_CLIMBABLE)) {
-			slipperiness = 1 - (1 - slipperiness) * 0.25f;
-		}
-
-		return slipperiness;
-	}
-
-	@Override
 	public float getPathingMalus(BlockGetter cache, Mob entity, PathType nodeType, BlockPos pos, Vec3i direction, Predicate<Direction> sides) {
 		// Avoid water when not already in it
 		if(!this.isInWater()) {
@@ -124,16 +98,6 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 					return -1.0f;
 				}
 			}
-		}
-
-		if(direction.getY() != 0) {
-			// Prevent vertical climbing pathfinding during rain when config is enabled
-			if(Config.COMMON.preventClimbingInRain() && this.level().isRaining() && this.level().isRainingAt(pos) &&
-			   !sides.test(Direction.UP) && !sides.test(Direction.DOWN)) {
-				return -1.0f;
-			}
-
-			// Already checked climbable neighbors above
 		}
 
 		return entity.getPathfindingMalus(nodeType);
