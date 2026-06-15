@@ -1270,28 +1270,54 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Vec3 attachVector = upVector.scale(-1);
 			attachVector = attachVector.subtract(axis.scale(axis.dot(attachVector)));
 
+			// Snap perpendicular vector to dominant axis (used for wall transitions and fallback for deep drops)
+			Vec3 perpAttachVector;
 			if(Math.abs(attachVector.x) > Math.abs(attachVector.y) && Math.abs(attachVector.x) > Math.abs(attachVector.z)) {
-				attachVector = new Vec3(Math.signum(attachVector.x), 0, 0);
+				perpAttachVector = new Vec3(Math.signum(attachVector.x), 0, 0);
 			} else if(Math.abs(attachVector.y) > Math.abs(attachVector.z)) {
-				attachVector = new Vec3(0, Math.signum(attachVector.y), 0);
+				perpAttachVector = new Vec3(0, Math.signum(attachVector.y), 0);
 			} else {
-				attachVector = new Vec3(0, 0, Math.signum(attachVector.z));
+				perpAttachVector = new Vec3(0, 0, Math.signum(attachVector.z));
 			}
+
+			// Floor/ceiling detachment (floor, no wall component): try straight down first for stair descent
+			boolean floorEdgeDetach = detachedY && Math.abs(this.prevAttachedSides.y) > 0.001D
+				&& Math.abs(this.prevAttachedSides.x) < 0.001D && Math.abs(this.prevAttachedSides.z) < 0.001D;
 
 			double attachDst = motion.length() + 0.1f;
 
 			AABB aabb = this.getBoundingBox();
 			motion = this.getDeltaMovement();
 
-			// Move AABB towards new surface until it touches
-			for(int i = 0; i < 2 && !this.onGround(); i++) {
-				this.move(MoverType.SELF, attachVector.scale(attachDst));
+			boolean attached = false;
+
+			if(floorEdgeDetach) {
+				// First try straight down for stair descent
+				Vec3 floorProbe = new Vec3(0, -Math.signum(this.prevAttachedSides.y), 0);
+				double floorDst = Math.max(attachDst, this.maxUpStep() + 0.6D);
+				for(int i = 0; i < 2 && !this.onGround(); i++) {
+					this.move(MoverType.SELF, floorProbe.scale(floorDst));
+				}
+				attached = this.onGround();
+				if(!attached) {
+					// Straight down found nothing, revert and try wall cling
+					this.setBoundingBox(aabb);
+					this.setLocationFromBoundingbox();
+					this.setDeltaMovement(motion);
+					this.setOnGround(prevOnGround);
+				}
 			}
 
-			// setStepHeight removed - maxUpStep field may have been changed in 1.21.4
+			if(!attached) {
+				// Perpendicular probe (wall transitions and fallback for deep drops)
+				for(int i = 0; i < 2 && !this.onGround(); i++) {
+					this.move(MoverType.SELF, perpAttachVector.scale(attachDst));
+				}
+				attached = this.onGround();
+			}
 
-			// Attaching failed, fall back to previous position
-			if(!this.onGround()) {
+			if(!attached) {
+				// All probes failed, revert to pre-detachment state
 				this.setBoundingBox(aabb);
 				this.setLocationFromBoundingbox();
 				this.setDeltaMovement(motion);
