@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import win.demistorm.stormiespiders.Constants;
 
@@ -12,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,6 +25,9 @@ public final class NonClimbableBlocksConfig {
 	// In-memory cache of non-climbable block patterns
 	private static volatile Set<String> nonClimbablePatterns = ConcurrentHashMap.newKeySet();
 	private static volatile Set<Identifier> exactMatchCache = ConcurrentHashMap.newKeySet();
+
+	// Per-block result cache
+	private static final Map<Block, Boolean> blockResultCache = new ConcurrentHashMap<>();
 
 	// Initialize config
 	public static void init() {
@@ -36,6 +41,19 @@ public final class NonClimbableBlocksConfig {
 
 	// Check if a block state should be treated as non-climbable
 	public static boolean isBlockNonClimbable(BlockState state) {
+		Block block = state.getBlock();
+		Boolean cached = blockResultCache.get(block);
+		if (cached != null) {
+			return cached;
+		}
+
+		boolean result = computeIsBlockNonClimbable(state);
+		blockResultCache.put(block, result);
+		return result;
+	}
+
+	// Uncached pattern matching
+	private static boolean computeIsBlockNonClimbable(BlockState state) {
 		if (nonClimbablePatterns.isEmpty()) {
 			return false;
 		}
@@ -121,6 +139,7 @@ public final class NonClimbableBlocksConfig {
 
 		nonClimbablePatterns = newPatterns;
 		exactMatchCache = newCache;
+		blockResultCache.clear();
 
 		// Save to config file
 		NonClimbableBlocksConfigData config = new NonClimbableBlocksConfigData();
@@ -164,6 +183,7 @@ public final class NonClimbableBlocksConfig {
 
 		nonClimbablePatterns = patterns;
 		exactMatchCache = cache;
+		blockResultCache.clear();
 
 		Constants.LOG.info("[NonClimbableBlocksConfig] Loaded {} non-climbable block patterns from config", patterns.size());
 	}
