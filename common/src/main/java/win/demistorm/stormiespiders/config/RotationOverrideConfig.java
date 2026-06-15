@@ -30,7 +30,7 @@ public final class RotationOverrideConfig {
 
 	public enum OverrideStatus {
 		NOT_LISTED,
-		ENABLED,
+		ROTATIONS_ONLY,
 		DISABLED
 	}
 
@@ -58,15 +58,15 @@ public final class RotationOverrideConfig {
 		if (enabled == null) {
 			return OverrideStatus.NOT_LISTED;
 		}
-		return enabled ? OverrideStatus.ENABLED : OverrideStatus.DISABLED;
+		return enabled ? OverrideStatus.ROTATIONS_ONLY : OverrideStatus.DISABLED;
 	}
 
 	public static boolean isRotationOverrideEnabled(EntityType<?> entityType) {
-		return getOverrideStatus(entityType) == OverrideStatus.ENABLED;
+		return getOverrideStatus(entityType) == OverrideStatus.ROTATIONS_ONLY;
 	}
 
 	public static boolean isClimberDisabled(EntityType<?> entityType) {
-		return getOverrideStatus(entityType) == OverrideStatus.DISABLED;
+		return getOverrideStatus(entityType) != OverrideStatus.NOT_LISTED;
 	}
 
 	private static Boolean findMatch(ResourceLocation entityKey, String entityId) {
