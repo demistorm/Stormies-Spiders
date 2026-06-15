@@ -44,6 +44,7 @@ import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.navigation.PathNavigation;
 import net.minecraft.world.entity.monster.Spider;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.BlockCollisions;
 import net.minecraft.world.level.CollisionGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.FenceGateBlock;
@@ -641,10 +642,18 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			}
 		};
 
-		Iterable<VoxelShape> shapes =  cachedCollisionReader.getBlockCollisions(this,aabb);
-//		StreamSupport.stream(new CollisionSpliterator(cachedCollisionReader, this, aabb, this::canClimbOnBlock), false);
+		BlockCollisions<VoxelShape> collisions = new BlockCollisions<>(cachedCollisionReader, this, aabb, false,
+				(mutPos, shape) -> {
+					BlockState surfaceState = cachedCollisionReader.getBlockState(mutPos);
+					return this.canClimbOnBlock(surfaceState, mutPos) ? shape : null;
+				});
 
-		shapes.forEach(shape -> shape.forAllBoxes(action));
+		while (collisions.hasNext()) {
+			VoxelShape shape = collisions.next();
+			if (shape != null) {
+				shape.forAllBoxes(action);
+			}
+		}
 	}
 
 	private List<AABB> getCollisionBoxes(AABB aabb) {
@@ -655,16 +664,19 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public boolean canClimbOnBlock(BlockState state, BlockPos pos) {
-		// Check if block is in non-climbable config list
+		// Check if block is in non-climbable config list (cached per block)
 		if (NonClimbableBlocksConfig.isBlockNonClimbable(state)) {
 			return false;
 		}
 
 		// Prevent climbing on blocks during rain when config is enabled
-		if(Config.COMMON.preventClimbingInRain() && this.level().isRaining() && this.level().isRainingAt(pos)) {
-			return false;
+		if (!Config.COMMON.preventClimbingInRain()) {
+			return true;
 		}
-		return true;
+		if (!this.level().isRaining()) {
+			return true;
+		}
+		return !this.level().isRainingAt(pos);
 	}
 
 	@Override
