@@ -39,6 +39,11 @@ subprojects {
             name = "Fuzs Mod Resources"
             url = "https://raw.githubusercontent.com/Fuzss/modresources/main/maven/"
         }
+        // Sable maven for the optional Sable Companion compat library
+        maven {
+            name = "Sable"
+            url = "https://maven.ryanhcode.dev/releases"
+        }
         // Maven Central for Night Config dependencies
         mavenCentral()
     }

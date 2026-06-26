@@ -1,6 +1,7 @@
 package win.demistorm.stormiespiders.common.entity.movement;
 
 import win.demistorm.stormiespiders.commonInit;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import it.unimi.dsi.fastutil.longs.Long2LongMap;
 import it.unimi.dsi.fastutil.longs.Long2LongOpenHashMap;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap;
@@ -25,6 +26,7 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.level.pathfinder.PathfindingContext;
 import net.minecraft.world.level.pathfinder.WalkNodeEvaluator;
 import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.EnumSet;
@@ -132,9 +134,10 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 
 	@Override
 	public Node getStart() {
-		double x = this.mob.getX();
-		double y = this.mob.getY();
-		double z = this.mob.getZ();
+		Vec3 startMobPos = SubLevelPathing.localMobPos(this.mob);
+		double x = startMobPos.x;
+		double y = startMobPos.y;
+		double z = startMobPos.z;
 
 		BlockPos.MutableBlockPos checkPos = new BlockPos.MutableBlockPos();
 
@@ -157,7 +160,7 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 				by = Mth.floor(y + Math.min(0.5D, Math.max(this.mob.getBbHeight() - 0.1f, 0.0D)));
 			} else {
 				BlockPos blockpos;
-				for(blockpos = this.mob.blockPosition(); (this.cachedLevel.getBlockState(blockpos).isAir() || this.cachedLevel.getBlockState(blockpos).isPathfindable(PathComputationType.LAND)) && blockpos.getY() > 0; blockpos = blockpos.below()) { }
+				for(blockpos = BlockPos.containing(startMobPos); (this.cachedLevel.getBlockState(blockpos).isAir() || this.cachedLevel.getBlockState(blockpos).isPathfindable(PathComputationType.LAND)) && blockpos.getY() > 0; blockpos = blockpos.below()) { }
 
 				by = blockpos.above().getY();
 			}
@@ -188,7 +191,7 @@ public class AdvancedWalkNodeProcessor extends WalkNodeEvaluator {
 		}
 
 		if(this.mob.getPathfindingMalus(startPathPoint.type) < 0.0F) {
-			AABB aabb = this.mob.getBoundingBox();
+			AABB aabb = this.mob.getBoundingBox().move(startMobPos.subtract(this.mob.position()));
 
 			if(this.isSafeStartingPosition(checkPos.set(aabb.minX, by, aabb.minZ)) || this.isSafeStartingPosition(checkPos.set(aabb.minX, by, aabb.maxZ)) || this.isSafeStartingPosition(checkPos.set(aabb.maxX, by, aabb.minZ)) || this.isSafeStartingPosition(checkPos.set(aabb.maxX, by, aabb.maxZ))) {
 				packed = this.removeNonStartingSides(this.getDirectionalPathNodeTypeCached(this.mob, checkPos.getX(), checkPos.getY(), checkPos.getZ()));

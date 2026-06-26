@@ -3,6 +3,7 @@ package win.demistorm.stormiespiders.common.entity.movement;
 import com.google.common.collect.ImmutableSet;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.protocol.game.DebugPackets;
@@ -109,11 +110,13 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
     public Vec3 getExactPathingTarget(BlockGetter blockaccess, BlockPos pos, Direction dir) {
         BlockPos offsetPos = pos.relative(dir);
 
-        if (!this.level.isLoaded(offsetPos)) {
+        BlockPos localOffsetPos = SubLevelPathing.toLocal(this.mob, offsetPos);
+
+        if (!this.level.isLoaded(localOffsetPos)) {
             return Vec3.atBottomCenterOf(pos);
         }
 
-        VoxelShape shape = blockaccess.getBlockState(offsetPos).getCollisionShape(blockaccess, offsetPos);
+        VoxelShape shape = this.level.getBlockState(localOffsetPos).getCollisionShape(this.level, localOffsetPos);
 
         Direction.Axis axis = dir.getAxis();
 

@@ -1,6 +1,7 @@
 package win.demistorm.stormiespiders.common.entity.movement;
 
 import win.demistorm.stormiespiders.commonInit;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -76,6 +77,8 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 		}
 
 		Path path = super.createPath(adjustedWaypoints, padding, startAbove, checkpointRange);
+
+		path = SubLevelPathing.projectPathToWorld(path, this.mob);
 
 		if(path != null && path.getTarget() != null) {
 			this.checkpointRange = checkpointRange;
@@ -159,14 +162,15 @@ public class AdvancedGroundPathNavigator<T extends Mob & IClimberEntity> extends
 				for(int xzo = -ceilHalfWidth; xzo <= ceilHalfWidth; xzo++) {
 					BlockPos pos = commonInit.blockPos(checkPos.x + (axis != 0 ? xzo : 0), checkPos.y + (axis != 1 ? yo : 0), checkPos.z + (axis != 2 ? xzo : 0));
 
-					if (!this.advancedPathFindingEntity.level().isLoaded(pos)) continue;
+					BlockPos localPos = SubLevelPathing.toLocal(this.advancedPathFindingEntity, pos);
+					if (!this.advancedPathFindingEntity.level().isLoaded(localPos)) continue;
 
-					BlockState state = this.advancedPathFindingEntity.level().getBlockState(pos);
+					BlockState state = this.advancedPathFindingEntity.level().getBlockState(localPos);
 
 					PathType nodeType = state.isPathfindable(PathComputationType.LAND) ? PathType.OPEN : PathType.BLOCKED;
 
 					if(nodeType == PathType.BLOCKED) {
-						VoxelShape collisionShape = state.getShape(this.advancedPathFindingEntity.level(), pos, CollisionContext.of(this.advancedPathFindingEntity)).move(pos.getX(), pos.getY(), pos.getZ());
+						VoxelShape collisionShape = state.getShape(this.advancedPathFindingEntity.level(), localPos, CollisionContext.of(this.advancedPathFindingEntity)).move(pos.getX(), pos.getY(), pos.getZ());
 
 						if(collisionShape != null && collisionShape.toAabbs().stream().anyMatch(aabb -> aabb.intersects(checkBox))) {
 							blocked = true;

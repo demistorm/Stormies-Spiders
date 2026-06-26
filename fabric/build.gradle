@@ -34,6 +34,9 @@ dependencies {
 
     // Mod Menu integration (optional)
     modCompileOnly "com.terraformersmc:modmenu:${modmenu_version}"
+
+    // Sable Companion (compile only). At runtime companion is provided by Sable when installed, otherwise guarded
+    compileOnly "dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}"
 }
 
 // Custom jar naming: stormiespiders-fabric-1.20.4-3.0.0.jar
