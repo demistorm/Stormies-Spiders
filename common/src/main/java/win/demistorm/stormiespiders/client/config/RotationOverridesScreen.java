@@ -170,6 +170,12 @@ public class RotationOverridesScreen extends Screen {
 			return width - 40;
 		}
 
+		// 1.20.1 default scrollbar (width/2 + 124) cuts into the wide row and swallows clicks on the far right buttons, push it past them
+		@Override
+		public int getScrollbarPosition() {
+			return this.getRowRight() + 6;
+		}
+
 		public class EntityEntry extends ObjectSelectionList.Entry<EntityEntry> {
 			private final String entityId;
 			private final boolean enabled;

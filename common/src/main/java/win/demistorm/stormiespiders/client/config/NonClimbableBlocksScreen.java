@@ -178,6 +178,12 @@ public class NonClimbableBlocksScreen extends Screen {
 			return width - 60;
 		}
 
+		// 1.20.1 default scrollbar (width/2 + 124) cuts into the wide row and swallows clicks on the right column remove button, push it past it
+		@Override
+		public int getScrollbarPosition() {
+			return this.getRowRight() + 6;
+		}
+
 		// Entry representing a row with two blocks
 		public class BlockEntry extends ObjectSelectionList.Entry<BlockEntry> {
 			private final String leftBlock;
