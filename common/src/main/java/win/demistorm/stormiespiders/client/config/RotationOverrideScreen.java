@@ -1,7 +1,7 @@
 package win.demistorm.stormiespiders.client.config;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Button;
@@ -127,20 +127,20 @@ public class RotationOverrideScreen extends Screen {
 	}
 
 	@Override
-	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		super.render(context, mouseX, mouseY, delta);
+	public void extractRenderState(GuiGraphicsExtractor context, int mouseX, int mouseY, float delta) {
+		super.extractRenderState(context, mouseX, mouseY, delta);
 
 		if (entityList != null) {
-			entityList.render(context, mouseX, mouseY, delta);
+			entityList.extractRenderState(context, mouseX, mouseY, delta);
 		}
 
-		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFFFF);
-		context.drawString(font, "Add Entity ID or Wildcard:", 20, topY - 12, 0xFFFFFFFF);
-		context.drawString(font, "Rotation Override Entities:", 20, listTopY - 12, 0xFFFFFFFF);
-		context.drawString(font, "(" + entityOverrides.size() + " entries)", 175, listTopY - 12, 0xFFAAAAAA);
+		context.centeredText(font, title, width / 2, 20, 0xFFFFFFFF);
+		context.text(font, "Add Entity ID or Wildcard:", 20, topY - 12, 0xFFFFFFFF);
+		context.text(font, "Rotation Override Entities:", 20, listTopY - 12, 0xFFFFFFFF);
+		context.text(font, "(" + entityOverrides.size() + " entries)", 175, listTopY - 12, 0xFFAAAAAA);
 
 		String instructions = "ROTATIONS ONLY = Apply rotations | DISABLED = Disable mod's features";
-		context.drawCenteredString(font, instructions, width / 2, height - 75, 0xFF808080);
+		context.centeredText(font, instructions, width / 2, height - 75, 0xFF808080);
 	}
 
 	@Override
@@ -201,7 +201,7 @@ public class RotationOverrideScreen extends Screen {
 			}
 
 			@Override
-			public void renderContent(GuiGraphics context, int mouseX, int mouseY, boolean isHovering, float delta) {
+			public void extractContent(GuiGraphicsExtractor context, int mouseX, int mouseY, boolean isHovering, float delta) {
 				int x = this.getX();
 				int y = this.getY();
 				int entryWidth = this.getWidth();
@@ -210,12 +210,12 @@ public class RotationOverrideScreen extends Screen {
 				int removeX = x + entryWidth - 18;
 				int removeY = y + (entryHeight - 13) / 2;
 				removeButton.setPosition(removeX, removeY);
-				removeButton.render(context, mouseX, mouseY, delta);
+				removeButton.extractRenderState(context, mouseX, mouseY, delta);
 
 			int toggleX = removeX - 95 - 5;
 			int toggleY = y + (entryHeight - WIDGET_HEIGHT) / 2;
 			toggleButton.setPosition(toggleX, toggleY);
-			toggleButton.render(context, mouseX, mouseY, delta);
+			toggleButton.extractRenderState(context, mouseX, mouseY, delta);
 
 			int fixedRightWidth = 95 + 13 + 20;
 				int maxLabelWidth = entryWidth - fixedRightWidth;
@@ -225,7 +225,7 @@ public class RotationOverrideScreen extends Screen {
 				}
 
 				int nameColor = enabled ? 0xFFFFFFFF : 0xFFAAAAAA;
-				context.drawString(font, Component.literal(display).withStyle(style -> style.withUnderlined(true)), x + 5, y + 6, nameColor);
+				context.text(font, Component.literal(display).withStyle(style -> style.withUnderlined(true)), x + 5, y + 6, nameColor);
 			}
 
 			@Override
