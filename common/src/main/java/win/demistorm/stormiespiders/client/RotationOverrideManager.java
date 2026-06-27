@@ -6,8 +6,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.core.Direction;
 import org.apache.commons.lang3.tuple.Pair;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
 import win.demistorm.stormiespiders.config.RotationOverrideConfig;
@@ -104,22 +106,48 @@ public class RotationOverrideManager {
 		Vec3 s = p.add(0, entity.getBbHeight() * 0.5f, 0);
 		AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(COLLISIONS_INCLUSION_RANGE);
 
-		Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(
-			consumer -> {
-				CollisionGetter collisionGetter = entity.level();
-				for (VoxelShape shape : collisionGetter.getBlockCollisions(entity, inclusionBox)) {
-					shape.forAllBoxes(consumer);
-				}
-			},
-			s,
-			state.smoothedNormal.scale(-1),
-			COLLISIONS_SMOOTHING_RANGE,
-			1.0f,
-			0.001f,
-			20,
-			0.05f,
-			s
-		);
+		Pair<Vec3, Vec3> attachmentPoint;
+		if (entity instanceof Mob mob && SubLevelPathing.onSubLevel(mob)) {
+			AABB localInclusionBox = SubLevelPathing.toSubLevelAABB(mob, inclusionBox);
+			Vec3 localS = SubLevelPathing.toSubLevelPoint(mob, s);
+			Vec3 localSearchNormal = SubLevelPathing.toSubLevelNormal(mob, state.smoothedNormal.scale(-1));
+			Pair<Vec3, Vec3> localAttachment = CollisionSmoothingUtil.findClosestPoint(
+				consumer -> {
+					CollisionGetter collisionGetter = entity.level();
+					for (VoxelShape shape : collisionGetter.getBlockCollisions(entity, localInclusionBox)) {
+						shape.forAllBoxes(consumer);
+					}
+				},
+				localS,
+				localSearchNormal,
+				COLLISIONS_SMOOTHING_RANGE,
+				1.0f,
+				0.001f,
+				20,
+				0.05f,
+				localS
+			);
+			attachmentPoint = localAttachment == null ? null : Pair.of(
+				SubLevelPathing.toWorldPoint(mob, localAttachment.getLeft()),
+				SubLevelPathing.toWorldNormal(mob, localAttachment.getRight()));
+		} else {
+			attachmentPoint = CollisionSmoothingUtil.findClosestPoint(
+				consumer -> {
+					CollisionGetter collisionGetter = entity.level();
+					for (VoxelShape shape : collisionGetter.getBlockCollisions(entity, inclusionBox)) {
+						shape.forAllBoxes(consumer);
+					}
+				},
+				s,
+				state.smoothedNormal.scale(-1),
+				COLLISIONS_SMOOTHING_RANGE,
+				1.0f,
+				0.001f,
+				20,
+				0.05f,
+				s
+			);
+		}
 
 		if (attachmentPoint != null) {
 			Vec3 attachmentPos = attachmentPoint.getLeft();
