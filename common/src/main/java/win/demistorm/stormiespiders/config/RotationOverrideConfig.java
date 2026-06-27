@@ -136,7 +136,7 @@ public final class RotationOverrideConfig {
 
 			if (!pattern.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(pattern);
+					ResourceLocation key = new ResourceLocation(pattern);
 					if (BuiltInRegistries.ENTITY_TYPE.containsKey(key)) {
 						newOverrides.put(pattern, enabled);
 						newAllPatterns.add(pattern);
@@ -197,7 +197,7 @@ public final class RotationOverrideConfig {
 
 			if (!pattern.contains("*")) {
 				try {
-					ResourceLocation key = ResourceLocation.parse(pattern);
+					ResourceLocation key = new ResourceLocation(pattern);
 					if (BuiltInRegistries.ENTITY_TYPE.containsKey(key)) {
 						allPat.add(pattern);
 						exactCache.add(key);

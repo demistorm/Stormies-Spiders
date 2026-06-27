@@ -126,12 +126,12 @@ public class RotationOverridesScreen extends Screen {
 
 	@Override
 	public void render(GuiGraphics context, int mouseX, int mouseY, float delta) {
-		renderBackground(context, mouseX, mouseY, delta);
-		super.render(context, mouseX, mouseY, delta);
-
+		renderBackground(context);
 		if (entityList != null) {
 			entityList.render(context, mouseX, mouseY, delta);
 		}
+
+		super.render(context, mouseX, mouseY, delta);
 
 		context.drawCenteredString(font, title, width / 2, 20, 0xFFFFFF);
 		context.drawString(font, "Add Entity ID or Wildcard:", 20, topY - 12, 0xFFFFFF);
@@ -154,7 +154,7 @@ public class RotationOverridesScreen extends Screen {
 	private class EntityListWidget extends ObjectSelectionList<EntityListWidget.EntityEntry> {
 
 		public EntityListWidget(Minecraft client, int width, int height, int y, int bottom) {
-			super(client, width, bottom - y, y, WIDGET_HEIGHT + 4);
+			super(client, width, height, y, bottom, WIDGET_HEIGHT + 4);
 		}
 
 		public void updateEntries() {
