@@ -2,6 +2,7 @@ package win.demistorm.stormiespiders.common.entity.movement;
 
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.Mth;
@@ -81,7 +82,8 @@ public class ClimberMoveController<T extends Mob & IClimberEntity> extends MoveC
 			double dz = this.wantedZ - this.mob.getZ();
 
 			if(this.side != null && this.block != null) {
-				VoxelShape shape = this.mob.level().getBlockState(this.block).getCollisionShape(this.mob.level(), this.block);
+				BlockPos localBlock = SubLevelPathing.toLocal(this.mob, this.block);
+				VoxelShape shape = this.mob.level().getBlockState(localBlock).getCollisionShape(this.mob.level(), localBlock);
 
 				AABB aabb = this.mob.getBoundingBox();
 

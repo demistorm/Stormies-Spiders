@@ -3,6 +3,7 @@ package win.demistorm.stormiespiders.mixin;
 import win.demistorm.stormiespiders.config.Config;
 import win.demistorm.stormiespiders.config.NonClimbableBlocksConfig;
 import win.demistorm.stormiespiders.config.RotationOverrideConfig;
+import win.demistorm.stormiespiders.compat.sable.SubLevelPathing;
 import win.demistorm.stormiespiders.common.CollisionSmoothingUtil;
 import win.demistorm.stormiespiders.common.Matrix4f;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
@@ -393,9 +394,16 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	}
 
 	private void updateWalkingSide() {
+		// On a Sable sublevel lock to local down since the 6 face scan below is noisy on the rotated local box
+		if (SubLevelPathing.onSubLevel(this)) {
+			this.groundDirection = Pair.of(SubLevelPathing.toWorldDirection(this, Direction.DOWN), SubLevelPathing.toWorldNormal(this, new Vec3(0, -1, 0)));
+			return;
+		}
+
 		Direction avoidPathingFacing = null;
 
 		AABB entityBox = this.getBoundingBox();
+		AABB refBox = entityBox;
 
 		double closestFacingDst = Double.MAX_VALUE;
 		Direction closestFacing = null;
@@ -409,7 +417,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				continue;
 			}
 
-			List<AABB> collisionBoxes = this.getCollisionBoxes(entityBox.inflate(0.2f).expandTowards(facing.getStepX() * stickingDistance, facing.getStepY() * stickingDistance, facing.getStepZ() * stickingDistance));
+			List<AABB> collisionBoxes = this.getCollisionBoxes(refBox.inflate(0.2f).expandTowards(facing.getStepX() * stickingDistance, facing.getStepY() * stickingDistance, facing.getStepZ() * stickingDistance));
 
 			double closestDst = Double.MAX_VALUE;
 
@@ -417,15 +425,15 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				switch(facing) {
 				case EAST:
 				case WEST:
-					closestDst = Math.min(closestDst, Math.abs(calculateXOffset(entityBox, collisionBox, -facing.getStepX() * stickingDistance)));
+					closestDst = Math.min(closestDst, Math.abs(calculateXOffset(refBox, collisionBox, -facing.getStepX() * stickingDistance)));
 					break;
 				case UP:
 				case DOWN:
-					closestDst = Math.min(closestDst, Math.abs(calculateYOffset(entityBox, collisionBox, -facing.getStepY() * stickingDistance)));
+					closestDst = Math.min(closestDst, Math.abs(calculateYOffset(refBox, collisionBox, -facing.getStepY() * stickingDistance)));
 					break;
 				case NORTH:
 				case SOUTH:
-					closestDst = Math.min(closestDst, Math.abs(calculateZOffset(entityBox, collisionBox, -facing.getStepZ() * stickingDistance)));
+					closestDst = Math.min(closestDst, Math.abs(calculateZOffset(refBox, collisionBox, -facing.getStepZ() * stickingDistance)));
 					break;
 				}
 			}
@@ -443,7 +451,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		if(closestFacing == null) {
 			this.groundDirection = Pair.of(Direction.DOWN, new Vec3(0, -1, 0));
 		} else {
-			this.groundDirection = Pair.of(closestFacing, weighting.normalize().add(0, -0.001f, 0).normalize());
+			Vec3 weightingNormal = weighting.normalize().add(0, -0.001f, 0).normalize();
+			this.groundDirection = Pair.of(closestFacing, weightingNormal);
 		}
 	}
 
@@ -589,6 +598,17 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	}
 
 	private void forEachCollisonBox(AABB aabb, Shapes.DoubleLineConsumer action) {
+		// On a Sable sublevel query the plotyard then bring boxes back to worldspace
+		if (SubLevelPathing.onSubLevel(this)) {
+			AABB localAabb = SubLevelPathing.toSubLevelAABB(this, aabb);
+			iterateCollisionBoxes(localAabb, (minX, minY, minZ, maxX, maxY, maxZ) -> SubLevelPathing.emitWorldBox(this, minX, minY, minZ, maxX, maxY, maxZ, action));
+		} else {
+			iterateCollisionBoxes(aabb, action);
+		}
+	}
+
+	// Collision box iteration in the caller's space (plot yard local on a sublevel, worldspace otherwise)
+	private void iterateCollisionBoxes(AABB aabb, Shapes.DoubleLineConsumer action) {
 		int minChunkX = ((Mth.floor(aabb.minX - 1.0E-7D) - 1) >> 4);
 		int maxChunkX = ((Mth.floor(aabb.maxX + 1.0E-7D) + 1) >> 4);
 		int minChunkZ = ((Mth.floor(aabb.minZ - 1.0E-7D) - 1) >> 4);
@@ -665,6 +685,11 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		}
 	}
 
+	// Like forEachCollisonBox but for a box already in plot yard local space
+	private void forEachCollisonBoxLocal(AABB localAabb, Shapes.DoubleLineConsumer action) {
+		iterateCollisionBoxes(localAabb, action);
+	}
+
 	private List<AABB> getCollisionBoxes(AABB aabb) {
 		List<AABB> boxes = new ArrayList<>();
 		this.forEachCollisonBox(aabb, (minX, minY, minZ, maxX, maxY, maxZ) -> boxes.add(new AABB(minX, minY, minZ, maxX, maxY, maxZ)));
@@ -700,7 +725,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 
 	@Override
 	public float getBlockSlipperiness(BlockPos pos) {
-		BlockState offsetState = this.level().getBlockState(pos);
+		BlockState offsetState = SubLevelPathing.getBlockState(this.level(), this, pos);
 		return offsetState.getBlock().getFriction() * 0.91f;
 	}
 
@@ -725,7 +750,17 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			Vec3 s = p.add(0, this.getBbHeight() * 0.5f, 0);
 			AABB inclusionBox = new AABB(s.x, s.y, s.z, s.x, s.y, s.z).inflate(this.collisionsInclusionRange);
 
-			Pair<Vec3, Vec3> attachmentPoint = CollisionSmoothingUtil.findClosestPoint(consumer -> this.forEachCollisonBox(inclusionBox, consumer), s, this.attachmentNormal.scale(-1), this.collisionsSmoothingRange, 1.0f, 0.001f, 20, 0.05f, s);
+			// On a sublevel find the attachment in local space then bring point and normal to worldspace
+			Pair<Vec3, Vec3> attachmentPoint;
+			if (SubLevelPathing.onSubLevel(this)) {
+				AABB localInclusionBox = SubLevelPathing.toSubLevelAABB(this, inclusionBox);
+				Vec3 localS = SubLevelPathing.toSubLevelPoint(this, s);
+				Vec3 localSearchNormal = SubLevelPathing.toSubLevelNormal(this, this.groundDirection.getValue());
+				Pair<Vec3, Vec3> localAttachment = CollisionSmoothingUtil.findClosestPoint(consumer -> this.forEachCollisonBoxLocal(localInclusionBox, consumer), localS, localSearchNormal, this.collisionsSmoothingRange, 1.0f, 0.001f, 20, 0.05f, localS);
+				attachmentPoint = localAttachment == null ? null : Pair.of(SubLevelPathing.toWorldPoint(this, localAttachment.getLeft()), SubLevelPathing.toWorldNormal(this, localAttachment.getRight()));
+			} else {
+				attachmentPoint = CollisionSmoothingUtil.findClosestPoint(consumer -> this.forEachCollisonBox(inclusionBox, consumer), s, this.groundDirection.getValue(), this.collisionsSmoothingRange, 1.0f, 0.001f, 20, 0.05f, s);
+			}
 
 			AABB entityBox = this.getBoundingBox();
 
@@ -978,7 +1013,8 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		double uprightness = Math.max(this.attachmentNormal.y, 0);
 		double gravity = this.getClimberGravity();
 		double stickingForce = gravity * uprightness + 0.08D * (1 - uprightness);
-		return walkingSide.getRight().scale(stickingForce);
+		Vec3 direction = SubLevelPathing.onSubLevel((Mob) (Object) this) ? this.attachmentNormal.scale(-1) : walkingSide.getRight();
+		return direction.scale(stickingForce);
 	}
 
 	@Override
@@ -1407,7 +1443,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 				this.setDeltaMovement(this.getDeltaMovement().multiply(1, 0, 1));
 			}
 
-			this.setOnGround(this.horizontalCollision || this.verticalCollision);
+		this.setOnGround(this.horizontalCollision || this.verticalCollision);
 		}
 
 		return false;

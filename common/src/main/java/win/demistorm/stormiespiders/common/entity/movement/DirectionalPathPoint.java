@@ -111,6 +111,21 @@ public class DirectionalPathPoint extends Node {
 		return pathPoint;
 	}
 
+	// Like cloneAndMove but swaps in a new path side (for projecting a path out of sublevel space)
+	public DirectionalPathPoint cloneAndMoveWithSide(int x, int y, int z, Direction newPathSide) {
+		DirectionalPathPoint pathPoint = new DirectionalPathPoint(x, y, z, this.pathableSides, newPathSide, this.isDrop);
+		pathPoint.heapIdx = this.heapIdx;
+		pathPoint.g = this.g;
+		pathPoint.h = this.h;
+		pathPoint.f = this.f;
+		pathPoint.cameFrom = this.cameFrom;
+		pathPoint.closed = this.closed;
+		pathPoint.walkedDistance = this.walkedDistance;
+		pathPoint.costMalus = this.costMalus;
+		pathPoint.type = this.type;
+		return pathPoint;
+	}
+
 	// Returns all pathable sides of this node (all sides the entity could potentially walk on)
 	public Direction[] getPathableSides() {
 		return this.pathableSides;
