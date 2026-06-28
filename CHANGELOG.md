@@ -1,3 +1,15 @@
+## Version 3.3.0
+#### Fixes:
+- Spiders can go down stairs properly now
+- Spiders no longer stick *at all* to disabled blocks
+- Clumping in groups no long occurs to that extreme (goodbye thousand legged monster lol)
+- Fixed scrollbar in Disabled Blocks menu (1.20.1)
+#### Additions:
+- Functional enough Sable/Aeronautics support (1.21.1)
+- Can now apply 3d rotations to any mob (not pathfinding though) via the new **Rotation Overrides** config menu
+- Broken modded spider mobs can now be **disabled** from this mod's effects via the Rotation Overrides menu
+- **26.2** support :D
+
 ## Version 3.2.0
 #### Fixes:
 - Added loaded chunks check to prevent timeout crashes (might fix TPS issues?)
