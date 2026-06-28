@@ -103,7 +103,7 @@ public class NonClimbableBlocksScreen extends Screen {
 		addRenderableWidget(
 			Button.builder(
 				Component.literal("Done"),
-				btn -> client.setScreen(parent))
+				btn -> client.gui.setScreen(parent))
 			.bounds(width / 2 - 100, height - 27, 200, 20)
 			.build());
 	}

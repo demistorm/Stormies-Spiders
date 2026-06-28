@@ -66,7 +66,7 @@ public final class ExtrasScreen {
                                         ModConfig.Data.setReducedAttackRange(reducedAttackRangeValue);
 
                                         Constants.LOG.info("Extras config saved: canSwim = {}, reducedAttackRange = {}", canSwimValue, reducedAttackRangeValue);
-                                        client.setScreen(parent);
+                                        client.gui.setScreen(parent);
                                     })
                             .bounds(width / 2 - 100, height - 27, 200, 20)
                             .build());

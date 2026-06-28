@@ -63,7 +63,7 @@ public final class ConfigScreen {
             addRenderableWidget(
                     Button.builder(
                                     Component.literal("Disabled Climbing Blocks..."),
-                                    btn -> client.setScreen(new NonClimbableBlocksScreen(this)))
+                                    btn -> client.gui.setScreen(new NonClimbableBlocksScreen(this)))
                             .bounds(width / 2 - 80, height / 4 + 72, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
                                     "Configure which blocks spiders cannot climb on (supports wildcards)")))
@@ -73,7 +73,7 @@ public final class ConfigScreen {
             addRenderableWidget(
                     Button.builder(
                                     Component.literal("Rotation Overrides..."),
-                                    btn -> client.setScreen(new RotationOverrideScreen(this)))
+                                    btn -> client.gui.setScreen(new RotationOverrideScreen(this)))
                             .bounds(width / 2 - 80, height / 4 + 96, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
                                     "Configure rotation overrides and climbing behavior. " +
@@ -86,7 +86,7 @@ public final class ConfigScreen {
             addRenderableWidget(
                     Button.builder(
                                     Component.literal("Extras..."),
-                                    btn -> client.setScreen(new ExtrasScreen.ExtrasToggleScreen(this)))
+                                    btn -> client.gui.setScreen(new ExtrasScreen.ExtrasToggleScreen(this)))
                             .bounds(width / 2 - 80, height / 4 + 120, 160, 20)
                             .tooltip(Tooltip.create(Component.literal(
                                     "Extra configuration options")))
@@ -101,7 +101,7 @@ public final class ConfigScreen {
                                         ModConfig.Data.setCanCrawlOnCeiling(canCrawlOnCeilingValue);
 
                                         Constants.LOG.info("Config saved: preventClimbingInRain = {}, canCrawlOnCeiling = {}", preventClimbingInRainValue, canCrawlOnCeilingValue);
-                                        client.setScreen(parent);
+                                        client.gui.setScreen(parent);
                                     })
                             .bounds(width / 2 - 100, height - 27, 200, 20)
                             .build());
