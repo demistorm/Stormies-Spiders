@@ -1,10 +1,10 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "7.1.2"
+    id "com.gradleup.shadow" version "9.4.3"
 }
 
 repositories {
     maven {
-        url "https://maven.neoforged.net/releases/"
+        url = "https://maven.neoforged.net/releases/"
     }
 }
 
@@ -31,15 +31,17 @@ configurations {
 dependencies {
     neoForge "net.neoforged:neoforge:${neoforge_version}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive false }
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionNeoForge")) { transitive = false }
 
     // Sable Companion (compile only). At runtime companion is provided by Sable when installed, otherwise guarded
     compileOnly "dev.ryanhcode.sable-companion:sable-companion-common-${minecraft_version}:${sable_companion_version}"
 }
 
 // Custom jar naming: stormiespiders-neoforge-1.20.4-3.0.0.jar
-archivesBaseName = "${rootProject.mod_id}-neoforge-${rootProject.minecraft_version}"
+base {
+    archivesName = "${rootProject.mod_id}-neoforge-${rootProject.minecraft_version}"
+}
 version = rootProject.mod_version
 
 processResources {
