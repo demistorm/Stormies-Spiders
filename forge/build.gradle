@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradleup.shadow" version "9.4.3"
 }
 
 architectury {
@@ -27,20 +27,22 @@ configurations {
 }
 
 repositories {
-    maven { url "https://cursemaven.com" }
+    maven { url = "https://cursemaven.com" }
 }
 
 dependencies {
     forge "net.minecraftforge:forge:${rootProject.forge_version}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive false }
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionForge")) { transitive = false }
 
     compileOnly(annotationProcessor("io.github.llamalad7:mixinextras-common:${rootProject.mixin_extras_version}"))
     implementation(include("io.github.llamalad7:mixinextras-forge:${rootProject.mixin_extras_version}"))
 }
 
-archivesBaseName = "${rootProject.mod_id}-forge-${rootProject.minecraft_version}"
+base {
+    archivesName = "${rootProject.mod_id}-forge-${rootProject.minecraft_version}"
+}
 version = rootProject.mod_version
 
 processResources {

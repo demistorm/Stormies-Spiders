@@ -1,5 +1,5 @@
 plugins {
-    id "com.github.johnrengelman.shadow" version "8.1.1"
+    id "com.gradleup.shadow" version "9.4.3"
 }
 
 architectury {
@@ -29,15 +29,17 @@ dependencies {
     modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
     modApi "net.fabricmc.fabric-api:fabric-api:${fabric_api_version}"
 
-    common(project(path: ":common", configuration: "namedElements")) { transitive false }
-    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive false }
+    common(project(path: ":common", configuration: "namedElements")) { transitive = false }
+    shadowCommon(project(path: ":common", configuration: "transformProductionFabric")) { transitive = false }
 
     // Mod Menu integration (optional)
     modCompileOnly "com.terraformersmc:modmenu:${modmenu_version}"
 }
 
 // Custom jar naming: stormiespiders-fabric-1.20.4-3.0.0.jar
-archivesBaseName = "${rootProject.mod_id}-fabric-${rootProject.minecraft_version}"
+base {
+    archivesName = "${rootProject.mod_id}-fabric-${rootProject.minecraft_version}"
+}
 version = rootProject.mod_version
 
 processResources {
