@@ -28,7 +28,7 @@ subprojects {
             name = 'ParchmentMC'
             url = 'https://maven.parchmentmc.org'
         }
-        maven { url "https://maven.fabricmc.net/" }
+        maven { url = "https://maven.fabricmc.net/" }
         // Terraformers maven for ModMenu
         maven {
             name = "TerraformersMC"
@@ -127,7 +127,9 @@ allprojects {
 
     // Set consistent project metadata across all loaders
     // Custom jar naming will be handled in individual subprojects
-    archivesBaseName = rootProject.mod_id
+    base {
+        archivesName = rootProject.mod_id
+    }
     version = rootProject.mod_version
     group = rootProject.maven_group
 
@@ -149,5 +151,3 @@ allprojects {
         withSourcesJar()
     }
 }
-
-
