@@ -1,3 +1,7 @@
+### Version 3.3.1 (1.21.1)
+- Added version check to Sable compat, requires Sable Companion 1.6.0+
+- Fixes sable compat related crashes when version was incorrect
+
 ## Version 3.3.0
 #### Fixes:
 - Spiders can go down stairs properly now

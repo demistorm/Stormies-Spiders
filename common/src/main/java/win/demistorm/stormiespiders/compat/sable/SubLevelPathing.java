@@ -15,6 +15,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.phys.shapes.Shapes;
 import win.demistorm.stormiespiders.Constants;
 import win.demistorm.stormiespiders.common.entity.movement.DirectionalPathPoint;
+import win.demistorm.stormiespiders.platform.Services;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -22,7 +23,12 @@ import java.util.List;
 // Compat between the pathfinding and Sable sublevels
 public final class SubLevelPathing {
 
-    private static final boolean ACTIVE;
+    // Minimum Sable Companion version to run compat on
+    private static final String MIN_SABLE_VERSION = "1.6.0";
+    private static final String SABLE_MOD_ID = "sablecompanion";
+
+    private static volatile boolean ACTIVE;
+    private static volatile String detectedSableVersion;
     private static final SableCompanion COMPANION;
     private static boolean loggedEngagement;
 
@@ -35,7 +41,20 @@ public final class SubLevelPathing {
             companion = null;
         }
         COMPANION = companion;
-        ACTIVE = companion != null;
+        if (companion != null) {
+            String version = null;
+            try {
+                version = Services.PLATFORM.getModVersion(SABLE_MOD_ID);
+            } catch (Throwable ignored) {
+            }
+            detectedSableVersion = version;
+            ACTIVE = version != null && versionAtLeast(version, MIN_SABLE_VERSION);
+            if (!ACTIVE) {
+                Constants.LOG.warn("Sable Companion detected but sublevel pathfinding compat is disabled. Found version {}, required {} or newer. Update Sable/Sable Companion", version, MIN_SABLE_VERSION);
+            }
+        } else {
+            ACTIVE = false;
+        }
     }
 
     private SubLevelPathing() {
@@ -46,18 +65,18 @@ public final class SubLevelPathing {
     }
 
     public static SubLevelAccess trackingSubLevel(Mob mob) {
-        return ACTIVE ? COMPANION.getTrackingSubLevel(mob) : null;
+        return querySubLevel(mob);
     }
 
     public static boolean onSubLevel(Mob mob) {
-        return ACTIVE && COMPANION.getTrackingSubLevel(mob) != null;
+        return querySubLevel(mob) != null;
     }
 
     public static AABB toSubLevelAABB(Mob mob, AABB world) {
         if (!ACTIVE) {
             return world;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         if (subLevel == null) {
             return world;
         }
@@ -69,7 +88,7 @@ public final class SubLevelPathing {
             action.consume(minX, minY, minZ, maxX, maxY, maxZ);
             return;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         if (subLevel == null) {
             action.consume(minX, minY, minZ, maxX, maxY, maxZ);
             return;
@@ -105,7 +124,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return world;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         return subLevel != null ? subLevel.logicalPose().transformPositionInverse(world) : world;
     }
 
@@ -114,7 +133,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return local;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         return subLevel != null ? subLevel.logicalPose().transformPosition(local) : local;
     }
 
@@ -123,7 +142,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return worldNormal;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         return subLevel != null ? subLevel.logicalPose().transformNormalInverse(worldNormal) : worldNormal;
     }
 
@@ -132,7 +151,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return localNormal;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         return subLevel != null ? subLevel.logicalPose().transformNormal(localNormal) : localNormal;
     }
 
@@ -141,7 +160,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return localDir;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         if (subLevel == null) {
             return localDir;
         }
@@ -154,7 +173,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return mob.position();
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         return subLevel != null ? subLevel.logicalPose().transformPositionInverse(mob.position()) : mob.position();
     }
 
@@ -163,7 +182,7 @@ public final class SubLevelPathing {
         if (!ACTIVE) {
             return worldPos;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         if (subLevel == null) {
             return worldPos;
         }
@@ -184,7 +203,7 @@ public final class SubLevelPathing {
         if (path == null || !ACTIVE) {
             return path;
         }
-        SubLevelAccess subLevel = COMPANION.getTrackingSubLevel(mob);
+        SubLevelAccess subLevel = querySubLevel(mob);
         if (subLevel == null) {
             return path;
         }
@@ -215,5 +234,40 @@ public final class SubLevelPathing {
         }
 
         return new Path(worldNodes, worldTarget, path.canReach());
+    }
+
+    private static SubLevelAccess querySubLevel(Mob mob) {
+        if (!ACTIVE) {
+            return null;
+        }
+        try {
+            return COMPANION.getTrackingSubLevel(mob);
+        } catch (Throwable t) {
+            ACTIVE = false;
+            Constants.LOG.warn("Sable Companion call failed at runtime, disabling sub level pathfinding compat (found version {}). Update Sable Companion to {} or newer. Error: {}", detectedSableVersion, MIN_SABLE_VERSION, t.toString());
+            return null;
+        }
+    }
+
+    private static boolean versionAtLeast(String current, String minimum) {
+        String[] cur = current.split("\\.");
+        String[] min = minimum.split("\\.");
+        int len = Math.max(cur.length, min.length);
+        for (int i = 0; i < len; i++) {
+            int c = i < cur.length ? parseIntSafe(cur[i]) : 0;
+            int m = i < min.length ? parseIntSafe(min[i]) : 0;
+            if (c != m) {
+                return c > m;
+            }
+        }
+        return true;
+    }
+
+    private static int parseIntSafe(String s) {
+        try {
+            return Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 }
