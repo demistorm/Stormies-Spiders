@@ -1,14 +1,14 @@
 package win.demistorm.stormiespiders.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityLivingTickHook;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityRegisterGoalsHook;
 import win.demistorm.stormiespiders.common.entity.mob.IMobEntityTickHook;
 import net.minecraft.world.entity.Mob;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(Mob.class)
@@ -29,15 +29,12 @@ public abstract class MobEntityMixin implements IMobEntityLivingTickHook, IMobEn
 	@Override
 	public void onTick() { }
 
-	@Shadow(prefix = "shadow$")
-	private void shadow$registerGoals() { }
-
-	@Redirect(method = "<init>*", at = @At(
+	@WrapOperation(method = "<init>*", at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/entity/Mob;registerGoals()V"
 			))
-	private void onRegisterGoals(Mob _this) {
-		this.shadow$registerGoals();
+	private void onRegisterGoals(Mob _this, Operation<Void> original) {
+		original.call(_this);
 
 		if(_this == (Object) this) {
 			this.onRegisterGoals();

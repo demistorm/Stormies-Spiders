@@ -1,5 +1,7 @@
 package win.demistorm.stormiespiders.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import win.demistorm.stormiespiders.config.Config;
@@ -64,7 +66,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import org.jetbrains.annotations.Nullable;
@@ -193,13 +194,13 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		ci.setReturnValue(navigate);
 	}
 
-	@Redirect(method = "defineSynchedData", at = @At(
+	@WrapOperation(method = "defineSynchedData", at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/network/syncher/SynchedEntityData$Builder;define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;",
 			ordinal = 0
 	))
-	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value) {
-		SynchedEntityData.Builder result = builder.define(accessor, value);
+	public <T> SynchedEntityData.Builder onDefineData(SynchedEntityData.Builder builder, EntityDataAccessor<T> accessor, T value, Operation<SynchedEntityData.Builder> original) {
+		SynchedEntityData.Builder result = original.call(builder, accessor, value);
 
 		builder.define(ROTATION_BODY, new Rotations(0, 0, 0));
 		builder.define(ROTATION_HEAD, new Rotations(0, 0, 0));

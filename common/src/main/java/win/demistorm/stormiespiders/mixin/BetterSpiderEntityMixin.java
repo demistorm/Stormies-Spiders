@@ -1,5 +1,7 @@
 package win.demistorm.stormiespiders.mixin;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 import win.demistorm.stormiespiders.common.entity.goal.BetterLeapAtTargetGoal;
 import win.demistorm.stormiespiders.common.entity.goal.WaterEscapeGoal;
@@ -26,7 +28,6 @@ import net.minecraft.world.level.pathfinder.PathType;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.UUID;
@@ -58,21 +59,21 @@ public abstract class BetterSpiderEntityMixin extends Monster implements IClimbe
 		this.goalSelector.addGoal(1, new WaterEscapeGoal<>(this));
 	}
 
-	@Redirect(method = "registerGoals()V", at = @At(
+	@WrapOperation(method = "registerGoals()V", at = @At(
 			value = "INVOKE",
 			target = "Lnet/minecraft/world/entity/ai/goal/GoalSelector;addGoal(ILnet/minecraft/world/entity/ai/goal/Goal;)V"
 			))
-	private void onAddGoal(GoalSelector selector, int priority, Goal task) {
+	private void onAddGoal(GoalSelector selector, int priority, Goal task, Operation<Void> original) {
 		if (RotationOverrideConfig.isClimberDisabled(this.getType())) {
-			selector.addGoal(priority, task);
+			original.call(selector, priority, task);
 			return;
 		}
 		if(task instanceof LeapAtTargetGoal) {
-			selector.addGoal(3, new BetterLeapAtTargetGoal<>(this, 0.4f));
+			original.call(selector, 3, new BetterLeapAtTargetGoal<>(this, 0.4f));
 		} else if(task instanceof TargetGoal) {
-			selector.addGoal(2, ((TargetGoal) task).setUnseenMemoryTicks(200));
+			original.call(selector, 2, ((TargetGoal) task).setUnseenMemoryTicks(200));
 		} else {
-			selector.addGoal(priority, task);
+			original.call(selector, priority, task);
 		}
 	}
 
