@@ -1,3 +1,7 @@
+## Version 3.3.1
+#### Additions:
+- 26.3 support
+
 ## Version 3.3.0
 #### Fixes:
 - Spiders can go down stairs properly now
