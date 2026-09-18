@@ -133,12 +133,12 @@ public class ClientEventHandlers {
 
 		matrixStack.translate(x, y, z);
 
-		matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
-		matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(
+		matrixStack.rotateDegrees(Axis.YP, renderOrientation.yaw);
+		matrixStack.rotateDegrees(Axis.XP, renderOrientation.pitch);
+		matrixStack.rotateDegrees(Axis.YP,
 				Math.signum(0.5f - renderOrientation.componentY
 						- renderOrientation.componentZ
-						- renderOrientation.componentX) * renderOrientation.yaw));
+						- renderOrientation.componentX) * renderOrientation.yaw);
 	}
 
 	private static void applyClimberTransformPost(ClimberRenderData data, PoseStack matrixStack) {
@@ -158,12 +158,12 @@ public class ClientEventHandlers {
 					- (float) renderOrientation.normal.z * verticalOffset;
 
 			// Reverse transformations in opposite order
-			matrixStack.mulPose(Axis.YP.rotationDegrees(
+			matrixStack.rotateDegrees(Axis.YP,
 					-(float) Math.signum(0.5f - orientation.componentY
 							- orientation.componentZ
-							- orientation.componentX) * renderOrientation.yaw));
-			matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
-			matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
+							- orientation.componentX) * renderOrientation.yaw);
+			matrixStack.rotateDegrees(Axis.XP, -renderOrientation.pitch);
+			matrixStack.rotateDegrees(Axis.YP, -renderOrientation.yaw);
 
 			matrixStack.translate(-x, -y, -z);
 		}
@@ -184,12 +184,12 @@ public class ClientEventHandlers {
 
 		matrixStack.translate(x, y, z);
 
-		matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
-		matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(
+		matrixStack.rotateDegrees(Axis.YP, renderOrientation.yaw);
+		matrixStack.rotateDegrees(Axis.XP, renderOrientation.pitch);
+		matrixStack.rotateDegrees(Axis.YP,
 				Math.signum(0.5f - renderOrientation.componentY
 						- renderOrientation.componentZ
-						- renderOrientation.componentX) * renderOrientation.yaw));
+						- renderOrientation.componentX) * renderOrientation.yaw);
 	}
 
 	private static void applyRotationOverrideTransformPost(RotationOverrideRenderData data, PoseStack matrixStack) {
@@ -206,12 +206,12 @@ public class ClientEventHandlers {
 				- (float) renderOrientation.normal.z * verticalOffset;
 
 		// Reverse transformations in opposite order
-		matrixStack.mulPose(Axis.YP.rotationDegrees(
+		matrixStack.rotateDegrees(Axis.YP,
 				-(float) Math.signum(0.5f - renderOrientation.componentY
 						- renderOrientation.componentZ
-						- renderOrientation.componentX) * renderOrientation.yaw));
-		matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
-		matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
+						- renderOrientation.componentX) * renderOrientation.yaw);
+		matrixStack.rotateDegrees(Axis.XP, -renderOrientation.pitch);
+		matrixStack.rotateDegrees(Axis.YP, -renderOrientation.yaw);
 
 		matrixStack.translate(-x, -y, -z);
 	}

@@ -516,7 +516,10 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		if(!this.level().isClientSide() && this.level() instanceof ServerLevel) {
 			ChunkMap.TrackedEntity entityTracker = ((ServerLevel) this.level()).getChunkSource().chunkMap.entityMap.get(this.getId());
 
-			if(entityTracker != null && !Config.COMMON.disableDataSync()) {
+			// Only sync on the entity update interval to prevent movement being choppy (accomodates interpolation changes in 26.3)
+			int syncInterval = this.getType().hasUpdateInterval() ? Math.max(1, this.getType().updateInterval()) : 1;
+
+			if(entityTracker != null && !Config.COMMON.disableDataSync() && this.tickCount % syncInterval == 0) {
 				// Sync attachment data only if data sync is enabled
 				this.entityData.set(ATTACHMENT_NORMAL, new Rotations(
 						(float) this.attachmentNormal.x,
@@ -1183,7 +1186,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 			float slipperiness = 0.91f;
 
 			if (this.onGround()) {
-				BlockPos offsetPos = new BlockPos(this.blockPosition()).relative(groundDirection.getLeft());
+				BlockPos offsetPos = this.blockPosition().relative(groundDirection.getLeft());
 				slipperiness = this.getBlockSlipperiness(offsetPos);
 			}
 
@@ -1262,7 +1265,7 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		if (this.onGround()) {
 			this.fallDistance = 0;
 
-			BlockPos offsetPos = new BlockPos(blockPosition()).relative(groundDirection.getLeft());
+			BlockPos offsetPos = blockPosition().relative(groundDirection.getLeft());
 			slipperiness = this.getBlockSlipperiness(offsetPos);
 		}
 
