@@ -32,6 +32,8 @@ public interface IClimberEntity extends IAdvancedPathFindingEntity {
 
 	public boolean canAttachToSide(Direction side);
 
+	default boolean hasAttachmentSync() { return true; }
+
 	public void setJumping(boolean jumping);
 
 	public float getBlockSlipperiness(BlockPos pos);

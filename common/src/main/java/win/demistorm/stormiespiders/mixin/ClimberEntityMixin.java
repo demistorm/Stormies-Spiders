@@ -583,6 +583,33 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 		return 0.075f;
 	}
 
+	@Override
+	public boolean hasAttachmentSync() {
+		return !this.level().isClientSide() || this.hasReceivedAttachmentData;
+	}
+
+	@Override
+	protected void positionRider(Entity passenger, Entity.MoveFunction moveFunction) {
+		if (!this.hasPassenger(passenger)) {
+			return;
+		}
+		if (RotationOverrideConfig.isClimberDisabled(this.getType()) || !this.hasAttachmentSync()) {
+			super.positionRider(passenger, moveFunction);
+			return;
+		}
+
+		Orientation orientation = this.calculateOrientation(1);
+		float verticalOffset = this.getVerticalOffset(1);
+
+		double offsetX = this.getAttachmentOffset(Direction.Axis.X, 1) - orientation.normal.x * verticalOffset;
+		double offsetY = this.getAttachmentOffset(Direction.Axis.Y, 1) - orientation.normal.y * verticalOffset;
+		double offsetZ = this.getAttachmentOffset(Direction.Axis.Z, 1) - orientation.normal.z * verticalOffset;
+
+		Vec3 vanillaPoint = new Vec3(0, this.getPassengersRidingOffset() + passenger.getMyRidingOffset(), 0);
+		Vec3 riding = orientation.getGlobal(vanillaPoint).add(offsetX, offsetY, offsetZ);
+		moveFunction.accept(passenger, this.getX() + riding.x, this.getY() + riding.y, this.getZ() + riding.z);
+	}
+
 	private void forEachCollisonBox(AABB aabb, Shapes.DoubleLineConsumer action) {
 		int minChunkX = ((Mth.floor(aabb.minX - 1.0E-7D) - 1) >> 4);
 		int maxChunkX = ((Mth.floor(aabb.maxX + 1.0E-7D) + 1) >> 4);
