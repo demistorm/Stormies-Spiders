@@ -36,6 +36,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.util.Mth;
 import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.MoverType;
@@ -583,6 +584,28 @@ public abstract class ClimberEntityMixin extends PathfinderMob implements IClimb
 	@Override
 	public float getVerticalOffset(float partialTicks) {
 		return 0.075f;
+	}
+
+	@Override
+	public boolean hasAttachmentSync() {
+		return !this.level().isClientSide() || this.hasReceivedAttachmentData;
+	}
+
+	@Override
+	protected Vec3 getPassengerAttachmentPoint(Entity passenger, EntityDimensions dimensions, float scale) {
+		Vec3 vanillaPoint = super.getPassengerAttachmentPoint(passenger, dimensions, scale);
+		if (RotationOverrideConfig.isClimberDisabled(this.getType()) || !this.hasAttachmentSync()) {
+			return vanillaPoint;
+		}
+
+		Orientation orientation = this.calculateOrientation(1);
+		float verticalOffset = this.getVerticalOffset(1);
+
+		double offsetX = this.getAttachmentOffset(Direction.Axis.X, 1) - orientation.normal.x * verticalOffset;
+		double offsetY = this.getAttachmentOffset(Direction.Axis.Y, 1) - orientation.normal.y * verticalOffset;
+		double offsetZ = this.getAttachmentOffset(Direction.Axis.Z, 1) - orientation.normal.z * verticalOffset;
+
+		return orientation.getGlobal(vanillaPoint).add(offsetX, offsetY, offsetZ);
 	}
 
 	private void forEachCollisonBox(AABB aabb, Shapes.DoubleLineConsumer action) {
