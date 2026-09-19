@@ -6,8 +6,13 @@ import win.demistorm.stormiespiders.client.RotationOverrideManager;
 import win.demistorm.stormiespiders.common.entity.mob.IClimberEntity;
 import win.demistorm.stormiespiders.common.entity.mob.Orientation;
 import net.minecraft.client.renderer.entity.state.LivingEntityRenderState;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.util.LightCoordsUtil;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 import java.util.WeakHashMap;
 
@@ -16,6 +21,7 @@ public class ClientEventHandlers {
 	// WeakHashMap for automatic cleanup and better entity tracking
 	private static final WeakHashMap<LivingEntityRenderState, ClimberRenderData> renderStateDataMap = new WeakHashMap<>();
 	private static final WeakHashMap<LivingEntityRenderState, RotationOverrideRenderData> rotationOverrideRenderStateDataMap = new WeakHashMap<>();
+	private static final WeakHashMap<LivingEntityRenderState, ClimberPassengerRenderData> climberPassengerRenderStateDataMap = new WeakHashMap<>();
 
 	private static class ClimberRenderData {
 		final IClimberEntity climber;
@@ -42,11 +48,28 @@ public class ClientEventHandlers {
 		final float verticalOffset;
 
 		RotationOverrideRenderData(LivingEntity entity, float partialTicks,
-							 Orientation renderOrientation, float verticalOffset) {
+						 Orientation renderOrientation, float verticalOffset) {
 			this.entity = entity;
 			this.partialTicks = partialTicks;
 			this.renderOrientation = renderOrientation;
 			this.verticalOffset = verticalOffset;
+		}
+	}
+
+	private static class ClimberPassengerRenderData {
+		final Orientation renderOrientation;
+		final float rollDegrees;
+		final float translateX;
+		final float translateY;
+		final float translateZ;
+
+		ClimberPassengerRenderData(Orientation renderOrientation, float rollDegrees,
+								   float translateX, float translateY, float translateZ) {
+			this.renderOrientation = renderOrientation;
+			this.rollDegrees = rollDegrees;
+			this.translateX = translateX;
+			this.translateY = translateY;
+			this.translateZ = translateZ;
 		}
 	}
 
@@ -85,12 +108,47 @@ public class ClientEventHandlers {
 		));
 	}
 
+	public static void storeClimberPassengerDataForRenderState(LivingEntityRenderState renderState,
+															   LivingEntity passenger,
+															   IClimberEntity vehicle,
+															   float partialTicks) {
+		Orientation renderOrientation = vehicle.calculateOrientation(partialTicks);
+
+		Vec3 attach = passenger.getVehicleAttachmentPoint((Entity) vehicle);
+		Vec3 anchorOffset = attach.subtract(renderOrientation.getGlobal(attach));
+
+		Entity vehicleEntity = (Entity) vehicle;
+		BlockPos lightProbe = BlockPos.containing(vehicleEntity.getLightProbePosition(partialTicks));
+		renderState.lightCoords = LightCoordsUtil.pack(
+				passenger.isOnFire() ? 15 : passenger.level().getBrightness(LightLayer.BLOCK, lightProbe),
+				passenger.level().getBrightness(LightLayer.SKY, lightProbe)
+		);
+
+		float rollDegrees = Math.signum(0.5f - renderOrientation.componentY
+				- renderOrientation.componentZ
+				- renderOrientation.componentX) * renderOrientation.yaw;
+
+		climberPassengerRenderStateDataMap.put(renderState, new ClimberPassengerRenderData(
+				renderOrientation,
+				rollDegrees,
+				(float) anchorOffset.x,
+				(float) anchorOffset.y,
+				(float) anchorOffset.z
+		));
+	}
+
 	// Apply transformations before main render
 	public static void onPreRenderLivingFromState(LivingEntityRenderState renderState, PoseStack matrixStack) {
 		ClimberRenderData data = renderStateDataMap.get(renderState);
 		if (data != null) {
 			matrixStack.pushPose();
 			applyClimberTransformPre(data, matrixStack);
+			return;
+		}
+		ClimberPassengerRenderData passengerData = climberPassengerRenderStateDataMap.get(renderState);
+		if (passengerData != null) {
+			matrixStack.pushPose();
+			applyClimberPassengerTransformPre(passengerData, matrixStack);
 			return;
 		}
 		RotationOverrideRenderData vData = rotationOverrideRenderStateDataMap.get(renderState);
@@ -107,6 +165,13 @@ public class ClientEventHandlers {
 			applyClimberTransformPost(data, matrixStack);
 			matrixStack.popPose();
 			renderStateDataMap.remove(renderState);
+			return;
+		}
+		ClimberPassengerRenderData passengerData = climberPassengerRenderStateDataMap.get(renderState);
+		if (passengerData != null) {
+			applyClimberPassengerTransformPost(passengerData, matrixStack);
+			matrixStack.popPose();
+			climberPassengerRenderStateDataMap.remove(renderState);
 			return;
 		}
 		RotationOverrideRenderData vData = rotationOverrideRenderStateDataMap.get(renderState);
@@ -167,6 +232,26 @@ public class ClientEventHandlers {
 
 			matrixStack.translate(-x, -y, -z);
 		}
+	}
+
+	private static void applyClimberPassengerTransformPre(ClimberPassengerRenderData data, PoseStack matrixStack) {
+		Orientation renderOrientation = data.renderOrientation;
+
+		matrixStack.translate(data.translateX, data.translateY, data.translateZ);
+
+		matrixStack.rotateDegrees(Axis.YP, renderOrientation.yaw);
+		matrixStack.rotateDegrees(Axis.XP, renderOrientation.pitch);
+		matrixStack.rotateDegrees(Axis.YP, data.rollDegrees);
+	}
+
+	private static void applyClimberPassengerTransformPost(ClimberPassengerRenderData data, PoseStack matrixStack) {
+		Orientation renderOrientation = data.renderOrientation;
+
+		matrixStack.rotateDegrees(Axis.YP, -data.rollDegrees);
+		matrixStack.rotateDegrees(Axis.XP, -renderOrientation.pitch);
+		matrixStack.rotateDegrees(Axis.YP, -renderOrientation.yaw);
+
+		matrixStack.translate(-data.translateX, -data.translateY, -data.translateZ);
 	}
 
 	private static void applyRotationOverrideTransformPre(RotationOverrideRenderData data, PoseStack matrixStack) {
