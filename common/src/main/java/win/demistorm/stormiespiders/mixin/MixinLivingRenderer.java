@@ -29,6 +29,10 @@ public abstract class MixinLivingRenderer<T extends LivingEntity, S extends Livi
     private void extractClimberRenderState(LivingEntity entity, S renderState, float partialTick, CallbackInfo ci) {
         if (entity instanceof IClimberEntity climber && !RotationOverrideConfig.isClimberDisabled(entity.getType())) {
             ClientEventHandlers.storeClimberDataForRenderState(renderState, entity, climber, partialTick);
+        } else if (entity.isPassenger() && entity.getVehicle() instanceof IClimberEntity climberVehicle
+                && climberVehicle.hasAttachmentSync()
+                && !RotationOverrideConfig.isClimberDisabled(entity.getVehicle().getType())) {
+            ClientEventHandlers.storeClimberPassengerDataForRenderState(renderState, entity, climberVehicle, partialTick);
         } else if (RotationOverrideManager.isRotationOverrideEntity(entity)) {
             RotationOverrideManager.updateIfNeeded(entity);
             ClientEventHandlers.storeRotationOverrideDataForRenderState(renderState, entity, partialTick);
