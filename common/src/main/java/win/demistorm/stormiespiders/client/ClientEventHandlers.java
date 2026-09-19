@@ -9,6 +9,7 @@ import win.demistorm.stormiespiders.config.RotationOverrideConfig;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.core.Direction;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.phys.Vec3;
 
 
 public class ClientEventHandlers {
@@ -31,6 +32,19 @@ public class ClientEventHandlers {
 			matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
 			matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
 			matrixStack.mulPose(Axis.YP.rotationDegrees((float) Math.signum(0.5f - orientation.componentY - orientation.componentZ - orientation.componentX) * renderOrientation.yaw));
+		} else if(entity.isPassenger() && entity.getVehicle() instanceof IClimberEntity climberVehicle
+				&& climberVehicle.hasAttachmentSync()
+				&& !RotationOverrideConfig.isClimberDisabled(entity.getVehicle().getType())) {
+			Orientation renderOrientation = climberVehicle.calculateOrientation(partialTicks);
+
+			Vec3 attach = entity.getVehicleAttachmentPoint(entity.getVehicle());
+			Vec3 anchorOffset = attach.subtract(renderOrientation.getGlobal(attach));
+
+			matrixStack.translate(anchorOffset.x, anchorOffset.y, anchorOffset.z);
+
+			matrixStack.mulPose(Axis.YP.rotationDegrees(renderOrientation.yaw));
+			matrixStack.mulPose(Axis.XP.rotationDegrees(renderOrientation.pitch));
+			matrixStack.mulPose(Axis.YP.rotationDegrees((float) Math.signum(0.5f - renderOrientation.componentY - renderOrientation.componentZ - renderOrientation.componentX) * renderOrientation.yaw));
 		} else if(RotationOverrideManager.isRotationOverrideEntity(entity)) {
 			RotationOverrideManager.updateIfNeeded(entity);
 
@@ -68,6 +82,19 @@ public class ClientEventHandlers {
 
 				matrixStack.translate(-x, -y, -z);
 			}
+		} else if(entity.isPassenger() && entity.getVehicle() instanceof IClimberEntity climberVehicle
+				&& climberVehicle.hasAttachmentSync()
+				&& !RotationOverrideConfig.isClimberDisabled(entity.getVehicle().getType())) {
+			Orientation renderOrientation = climberVehicle.calculateOrientation(partialTicks);
+
+			Vec3 attach = entity.getVehicleAttachmentPoint(entity.getVehicle());
+			Vec3 anchorOffset = attach.subtract(renderOrientation.getGlobal(attach));
+
+			matrixStack.mulPose(Axis.YP.rotationDegrees(-(float) Math.signum(0.5f - renderOrientation.componentY - renderOrientation.componentZ - renderOrientation.componentX) * renderOrientation.yaw));
+			matrixStack.mulPose(Axis.XP.rotationDegrees(-renderOrientation.pitch));
+			matrixStack.mulPose(Axis.YP.rotationDegrees(-renderOrientation.yaw));
+
+			matrixStack.translate(-anchorOffset.x, -anchorOffset.y, -anchorOffset.z);
 		} else if(RotationOverrideManager.isRotationOverrideEntity(entity)) {
 			Orientation renderOrientation = RotationOverrideManager.getOrientation(entity, partialTicks);
 			float verticalOffset = RotationOverrideManager.getVerticalOffset();
