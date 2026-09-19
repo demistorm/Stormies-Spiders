@@ -1,4 +1,10 @@
-### Version 3.3.1 (1.21.1)
+## Version 3.3.2 (1.21.1)
+#### Additions:
+- 26.3 support (26.3-3.3.1)
+- Added skeleton jockey rotations to match mount spider
+
+## Version 3.3.1 (1.21.1)
+#### Additions:
 - Added version check to Sable compat, requires Sable Companion 1.6.0+
 - Fixes sable compat related crashes when version was incorrect
 
@@ -34,5 +40,6 @@
 ## Version 3.1.0
 - Added vanilla server fallback, so now rotations work even without the mod on the server! (Note: They however look better if the mod is also on the server)
 - Added disabled blocks menu/config, spiders will be unable to climb over blocks in this config (trapdoors enabled by default as an example)
+- Reworked 1.20.4->1.21.4 rotation system to mirror newer versions' for parity
 - Fixed player models rotating in various ways when spiders are present on (1.21.4-1.21.8)
 - Moved all configs to the same folder
