@@ -29,6 +29,9 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
 
     protected boolean findDirectPathPoints = false;
 
+    @Nullable
+    protected Path lastFollowedPath;
+
     public AdvancedClimberPathNavigator(T entity, Level worldIn, boolean checkObstructions, boolean canPathWalls, boolean canPathCeiling) {
         super(entity, worldIn, checkObstructions);
 
@@ -68,7 +71,9 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         }
 
         if (!this.isDone()) {
-            if (this.canUpdatePath() && this.tick % 2 == 0) {
+            //so a fresh path could be received at odd ticks. if we DONT call followThePath, spider will try to walk to the node its already at, causing rotation jitter
+            if (this.canUpdatePath() && (this.tick % 2 == 0 || this.path != this.lastFollowedPath)) {
+                this.lastFollowedPath = this.path;
                 this.followThePath();
             } else if (this.path != null && !this.path.isDone()) {
                 Vec3 pos = this.getTempMobPos();
@@ -133,15 +138,11 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         double y = offsetPos.getY() + pathingOffsetY + (dir == Direction.DOWN ? -pathingOffsetY : 0.0D) + (dir == Direction.UP ? -pathingOffsetY + marginY : 0.0D);
         double z = offsetPos.getZ() + pathingOffsetXZ + dir.getStepZ() * marginXZ;
 
-        switch (axis) {
-            default:
-            case X:
-                return new Vec3(x + offset, y, z);
-            case Y:
-                return new Vec3(x, y + offset, z);
-            case Z:
-                return new Vec3(x, y, z + offset);
-        }
+        return switch (axis) {
+            default -> new Vec3(x + offset, y, z);
+            case Y -> new Vec3(x, y + offset, z);
+            case Z -> new Vec3(x, y, z + offset);
+        };
     }
 
     @Override
@@ -300,39 +301,30 @@ public class AdvancedClimberPathNavigator<T extends Mob & IClimberEntity> extend
         int sizeX = 0;//(int) this.mob.getBbWidth();
         int sizeY = 0;//(int) this.mob.getBbHeight();
         int sizeZ = 0;//(int) this.mob.getBbWidth();
-        switch (this.verticalFacing.getAxis()) {
-            case X:
-                return this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.Z, Direction.Axis.X, Direction.Axis.Y, 0.0D, this.verticalFacing.getStepX() < 0);
-            case Y:
-                return this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.X, Direction.Axis.Y, Direction.Axis.Z, 0.0D, this.verticalFacing.getStepY() < 0);
-            case Z:
-                return this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.Y, Direction.Axis.Z, Direction.Axis.X, 0.0D, this.verticalFacing.getStepZ() < 0);
-        }
-        return false;
+        return switch (this.verticalFacing.getAxis()) {
+            case X ->
+                    this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.Z, Direction.Axis.X, Direction.Axis.Y, 0.0D, this.verticalFacing.getStepX() < 0);
+            case Y ->
+                    this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.X, Direction.Axis.Y, Direction.Axis.Z, 0.0D, this.verticalFacing.getStepY() < 0);
+            case Z ->
+                    this.isDirectPathBetweenPoints(start, end, sizeX, sizeY, sizeZ, Direction.Axis.Y, Direction.Axis.Z, Direction.Axis.X, 0.0D, this.verticalFacing.getStepZ() < 0);
+        };
     }
 
     protected static double swizzle(Vec3 vec, Direction.Axis axis) {
-        switch (axis) {
-            case X:
-                return vec.x;
-            case Y:
-                return vec.y;
-            case Z:
-                return vec.z;
-        }
-        return 0;
+        return switch (axis) {
+            case X -> vec.x;
+            case Y -> vec.y;
+            case Z -> vec.z;
+        };
     }
 
     protected static int swizzle(int x, int y, int z, Direction.Axis axis) {
-        switch (axis) {
-            case X:
-                return x;
-            case Y:
-                return y;
-            case Z:
-                return z;
-        }
-        return 0;
+        return switch (axis) {
+            case X -> x;
+            case Y -> y;
+            case Z -> z;
+        };
     }
 
     protected static int unswizzle(int x, int y, int z, Direction.Axis ax, Direction.Axis ay, Direction.Axis az, Direction.Axis axis) {

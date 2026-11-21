@@ -8,6 +8,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.pathfinder.Path;
+import org.jetbrains.annotations.Nullable;
 
 public class BetterSpiderPathNavigator<T extends Mob & IClimberEntity> extends AdvancedClimberPathNavigator<T> {
 	private boolean useVanillaBehaviour;
@@ -20,12 +21,14 @@ public class BetterSpiderPathNavigator<T extends Mob & IClimberEntity> extends A
 	}
 
 	@Override
+	@Nullable
 	public Path createPath(BlockPos pos, int p_179680_2_) {
 		this.targetPosition = pos;
 		return super.createPath(pos, p_179680_2_);
 	}
 
 	@Override
+	@Nullable
 	public Path createPath(Entity entityIn, int p_75494_2_) {
 		this.targetPosition = entityIn.blockPosition();
 		return super.createPath(entityIn, p_75494_2_);
